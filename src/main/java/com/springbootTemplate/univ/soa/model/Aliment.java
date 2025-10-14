@@ -25,7 +25,7 @@ public class Aliment {
     private List<CategorieAliment> categories = new ArrayList<>();
 
     // Constructeur vide
-    public  Aliment() {
+    public Aliment() {
     }
 
     // Constructeur complet
