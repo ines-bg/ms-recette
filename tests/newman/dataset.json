@@ -1,0 +1,33 @@
+[
+  {
+    "titre": "Spaghetti Carbonara",
+    "description": "Recette italienne traditionnelle avec une sauce crémeuse",
+    "tempsPreparation": 15,
+    "tempsCuisson": 20,
+    "nombrePersonnes": 4,
+    "difficulte": "FACILE",
+    "categorie": "PLAT_PRINCIPAL",
+    "instructions": "1. Faire cuire les pâtes al dente\\n2. Préparer la sauce avec oeufs et parmesan\\n3. Mélanger et servir"
+  },
+  {
+    "titre": "Tiramisu Maison",
+    "description": "Dessert italien classique au café et mascarpone",
+    "tempsPreparation": 30,
+    "tempsCuisson": 0,
+    "nombrePersonnes": 6,
+    "difficulte": "MOYEN",
+    "categorie": "DESSERT",
+    "instructions": "1. Préparer le café\\n2. Monter la crème mascarpone\\n3. Tremper les biscuits\\n4. Monter en couches\\n5. Réfrigérer 4h"
+  },
+  {
+    "titre": "Salade César",
+    "description": "Salade fraîche avec poulet grillé et sauce César",
+    "tempsPreparation": 15,
+    "tempsCuisson": 10,
+    "nombrePersonnes": 2,
+    "difficulte": "FACILE",
+    "categorie": "ENTREE",
+    "instructions": "1. Griller le poulet\\n2. Préparer la sauce César\\n3. Mélanger avec la laitue\\n4. Ajouter croûtons et parmesan"
+  }
+]
+

@@ -1,0 +1,317 @@
+{
+  "info": {
+    "name": "MS-Recette Integration Tests",
+    "_postman_id": "ms-recette-integration",
+    "description": "Tests d'intégration end-to-end pour MS-Recette avec MS-Persistance",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health Checks",
+      "item": [
+        {
+          "name": "MS-Recette Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"MS-Recette is UP\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.equal('UP');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "health"]
+            }
+          }
+        },
+        {
+          "name": "MS-Persistance Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"MS-Persistance is UP\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{persistanceUrl}}/actuator/health",
+              "host": ["{{persistanceUrl}}"],
+              "path": ["actuator", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Test Recette Creation Flow",
+      "item": [
+        {
+          "name": "Create Recette",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Recette created successfully\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData.titre).to.equal(pm.iterationData.get('titre'));",
+                  "    pm.environment.set('recetteId', jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titre\": \"{{titre}}\",\n  \"description\": \"{{description}}\",\n  \"tempsPreparation\": {{tempsPreparation}},\n  \"tempsCuisson\": {{tempsCuisson}},\n  \"nombrePersonnes\": {{nombrePersonnes}},\n  \"difficulte\": \"{{difficulte}}\",\n  \"categorie\": \"{{categorie}}\",\n  \"instructions\": \"{{instructions}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/recettes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recettes"]
+            }
+          }
+        },
+        {
+          "name": "Get Recette by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Recette retrieved successfully\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('titre');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recettes/{{recetteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recettes", "{{recetteId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get All Recettes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Recettes list retrieved\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(jsonData.length).to.be.greaterThan(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recettes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recettes"]
+            }
+          }
+        },
+        {
+          "name": "Search Recettes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Search works correctly\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categorie\": \"{{categorie}}\",\n  \"difficulte\": \"{{difficulte}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/recettes/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recettes", "search"]
+            }
+          }
+        },
+        {
+          "name": "Get Recettes by Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Recettes filtered by category\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recettes/categorie/{{categorie}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recettes", "categorie", "{{categorie}}"]
+            }
+          }
+        },
+        {
+          "name": "Check Recette Exists",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Recette exists check\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.text()).to.equal('true');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recettes/{{recetteId}}/exists",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recettes", "{{recetteId}}", "exists"]
+            }
+          }
+        },
+        {
+          "name": "Update Recette",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Recette updated successfully\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titre\": \"{{titre}} - Updated\",\n  \"description\": \"Description mise à jour\",\n  \"difficulte\": \"MOYEN\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/recettes/{{recetteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recettes", "{{recetteId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Recette",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Recette deleted successfully\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recettes/{{recetteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recettes", "{{recetteId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

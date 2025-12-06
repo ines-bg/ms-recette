@@ -1,0 +1,178 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: soa-integration
+---
+# MySQL Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: soa-integration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "root123"
+        - name: MYSQL_DATABASE
+          value: "recette_db"
+        ports:
+        - containerPort: 3306
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+# MySQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: soa-integration
+spec:
+  selector:
+    app: mysql
+  ports:
+  - port: 3306
+    targetPort: 3306
+  type: ClusterIP
+---
+# MS-Persistance Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-persistance
+  namespace: soa-integration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-persistance
+  template:
+    metadata:
+      labels:
+        app: ms-persistance
+    spec:
+      containers:
+      - name: ms-persistance
+        image: abdboutchichi/ms-persistance:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mysql://mysql:3306/recette_db?createDatabaseIfNotExist=true"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "root"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "root123"
+        ports:
+        - containerPort: 8090
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8090
+          initialDelaySeconds: 60
+          periodSeconds: 15
+---
+# MS-Persistance Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-persistance
+  namespace: soa-integration
+spec:
+  selector:
+    app: ms-persistance
+  ports:
+  - port: 8090
+    targetPort: 8090
+  type: ClusterIP
+---
+# MS-Recette Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-recette
+  namespace: soa-integration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-recette
+  template:
+    metadata:
+      labels:
+        app: ms-recette
+    spec:
+      containers:
+      - name: ms-recette
+        image: ms-recette:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MS_PERSISTANCE_URL
+          value: "http://ms-persistance:8090"
+        - name: SERVER_PORT
+          value: "8081"
+        ports:
+        - containerPort: 8081
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8081
+          initialDelaySeconds: 60
+          periodSeconds: 15
+---
+# MS-Recette Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-recette
+  namespace: soa-integration
+spec:
+  selector:
+    app: ms-recette
+  ports:
+  - port: 8081
+    targetPort: 8081
+    nodePort: 30081
+  type: NodePort
+
