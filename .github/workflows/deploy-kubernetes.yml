@@ -79,15 +79,31 @@ jobs:
           
           echo "✅ MS-Recette image loaded successfully"
 
-      - name: Pull MS-Persistance image from Docker Hub
+      - name: Pull and Load MS-Persistance image
         run: |
           echo "📥 Pulling MS-Persistance image from Docker Hub..."
           docker pull abdboutchichi/ms-persistance:latest
           
-          echo "📦 Loading MS-Persistance into Minikube..."
-          minikube image load abdboutchichi/ms-persistance:latest
+          echo "💾 Saving MS-Persistance image to tar file..."
+          docker save abdboutchichi/ms-persistance:latest -o /tmp/ms-persistance.tar
           
-          echo "✅ MS-Persistance image loaded into Minikube"
+          echo "📦 Loading MS-Persistance into Minikube Docker daemon..."
+          # Method 1: Use minikube's docker-env
+          eval $(minikube -p minikube docker-env)
+          docker load -i /tmp/ms-persistance.tar
+          
+          # Verify the image is loaded
+          echo "🔍 Verifying MS-Persistance image in Minikube..."
+          docker images | grep ms-persistance || {
+            echo "⚠️  Image not visible, trying alternative method..."
+            # Method 2: Direct load via minikube ssh
+            minikube ssh "docker load -i /tmp/ms-persistance.tar" < /tmp/ms-persistance.tar
+          }
+          
+          echo "✅ MS-Persistance image successfully loaded into Minikube"
+          
+          # Cleanup
+          rm -f /tmp/ms-persistance.tar
 
       - name: Create namespace
         run: |
