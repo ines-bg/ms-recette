@@ -85,25 +85,23 @@ jobs:
           docker pull abdboutchichi/ms-persistance:latest
           
           echo "💾 Saving MS-Persistance image to tar file..."
-          docker save abdboutchichi/ms-persistance:latest -o /tmp/ms-persistance.tar
+          docker save abdboutchichi/ms-persistance:latest -o ms-persistance.tar
           
-          echo "📦 Loading MS-Persistance into Minikube Docker daemon..."
-          # Method 1: Use minikube's docker-env
-          eval $(minikube -p minikube docker-env)
-          docker load -i /tmp/ms-persistance.tar
-          
-          # Verify the image is loaded
-          echo "🔍 Verifying MS-Persistance image in Minikube..."
-          docker images | grep ms-persistance || {
-            echo "⚠️  Image not visible, trying alternative method..."
-            # Method 2: Direct load via minikube ssh
-            minikube ssh "docker load -i /tmp/ms-persistance.tar" < /tmp/ms-persistance.tar
+          echo "📦 Loading MS-Persistance into Minikube..."
+          # Use minikube image load command
+          minikube image load ms-persistance.tar || {
+            echo "⚠️ minikube image load failed, trying docker-env method..."
+            eval $(minikube -p minikube docker-env)
+            docker load -i ms-persistance.tar
           }
+          
+          echo "🔍 Verifying MS-Persistance image in Minikube..."
+          minikube image ls | grep ms-persistance
           
           echo "✅ MS-Persistance image successfully loaded into Minikube"
           
           # Cleanup
-          rm -f /tmp/ms-persistance.tar
+          rm -f ms-persistance.tar
 
       - name: Create namespace
         run: |
@@ -142,15 +140,36 @@ jobs:
 
       - name: Wait for MS-Persistance to be ready
         run: |
-          echo "⏳ Waiting for MS-Persistance to be ready (max 180s)..."
-          kubectl wait --for=condition=ready pod -l app=ms-persistance -n ${{ env.NAMESPACE }} --timeout=180s || {
+          echo "⏳ Waiting for MS-Persistance to be ready (max 300s)..."
+          kubectl wait --for=condition=ready pod -l app=ms-persistance -n ${{ env.NAMESPACE }} --timeout=300s || {
             echo "❌ MS-Persistance not ready!"
-            kubectl get pods -n ${{ env.NAMESPACE }} -l app=ms-persistance
+            echo ""
+            echo "📊 Pod status:"
+            kubectl get pods -n ${{ env.NAMESPACE }} -l app=ms-persistance -o wide
+            echo ""
+            echo "📋 Pod description:"
             kubectl describe pod -l app=ms-persistance -n ${{ env.NAMESPACE }}
+            echo ""
+            echo "📝 MS-Persistance logs:"
             kubectl logs -l app=ms-persistance -n ${{ env.NAMESPACE }} --tail=100 || true
+            echo ""
+            echo "📝 MySQL logs:"
+            kubectl logs -l app=mysql -n ${{ env.NAMESPACE }} --tail=50 || true
+            echo ""
+            echo "🔍 Recent events:"
+            kubectl get events -n ${{ env.NAMESPACE }} --sort-by='.lastTimestamp' | tail -20
             exit 1
           }
           echo "✅ MS-Persistance is ready!"
+          
+          # Vérifier la santé du service
+          echo "🏥 Checking MS-Persistance health endpoint..."
+          POD_NAME=$(kubectl get pods -n ${{ env.NAMESPACE }} -l app=ms-persistance -o jsonpath='{.items[0].metadata.name}')
+          kubectl exec -n ${{ env.NAMESPACE }} $POD_NAME -- curl -f http://localhost:8090/actuator/health || {
+            echo "⚠️ Health endpoint not responding correctly"
+            kubectl logs -n ${{ env.NAMESPACE }} $POD_NAME --tail=50
+          }
+          echo "✅ MS-Persistance health check passed!"
 
       - name: Debug pods before rollout
         if: always()

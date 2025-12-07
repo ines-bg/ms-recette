@@ -377,11 +377,59 @@ Ce projet est sous licence MIT.
 
 ---
 
+## 🐛 Troubleshooting
+
+### Problème : Minikube Image Load Error
+
+**Erreur** :
+```
+X Exiting due to GUEST_IMAGE_LOAD: Failed to load image
+blob sha256:... not found
+```
+
+**Solution** :
+Utiliser `docker save/load` au lieu de `minikube image load` :
+
+```bash
+docker pull abdboutchichi/ms-persistance:latest
+docker save abdboutchichi/ms-persistance:latest -o /tmp/ms-persistance.tar
+eval $(minikube docker-env)
+docker load -i /tmp/ms-persistance.tar
+```
+
+Voir [FIX-MINIKUBE-IMAGE-LOAD.md](./FIX-MINIKUBE-IMAGE-LOAD.md) pour plus de détails.
+
+### Problème : Coverage < 60%
+
+**Solution** :
+```bash
+# Vérifier les exclusions JaCoCo dans pom.xml
+# Classes exclues : config, request, response, exception, model
+mvn clean test jacoco:report
+```
+
+### Problème : Tests Newman Échouent
+
+**Solution** :
+```bash
+# Vérifier que MS-Persistance et MS-Recette sont UP
+curl http://localhost:8090/actuator/health
+curl http://localhost:8081/actuator/health
+
+# Créer les données de test
+cd tests/newman
+npm install
+npm test
+```
+
+---
+
 ## 📞 Support
 
 Pour toute question ou problème :
 - Ouvrir une issue sur GitHub
 - Contacter l'équipe de développement
+- Consulter [FIX-MINIKUBE-IMAGE-LOAD.md](./FIX-MINIKUBE-IMAGE-LOAD.md)
 
 ---
 

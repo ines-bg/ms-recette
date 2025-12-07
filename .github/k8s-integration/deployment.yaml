@@ -36,6 +36,27 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "500m"
+        livenessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        readinessProbe:
+          exec:
+            command:
+            - mysqladmin
+            - ping
+            - -h
+            - "127.0.0.1"
+            - --protocol=TCP
+            - -uroot
+            - -proot123
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 10
 ---
 # MySQL Service
 apiVersion: v1
@@ -67,17 +88,35 @@ spec:
       labels:
         app: ms-persistance
     spec:
+      initContainers:
+      - name: wait-for-mysql
+        image: busybox:1.36
+        command: ['sh', '-c']
+        args:
+        - |
+          echo "⏳ Waiting for MySQL to be ready..."
+          until nc -z mysql 3306; do
+            echo "MySQL not ready yet, waiting 5s..."
+            sleep 5
+          done
+          echo "✅ MySQL is ready!"
+          # Attendre 10 secondes supplémentaires pour que MySQL soit complètement initialisé
+          echo "⏳ Waiting additional 10s for MySQL initialization..."
+          sleep 10
+          echo "✅ Ready to start MS-Persistance!"
       containers:
       - name: ms-persistance
         image: abdboutchichi/ms-persistance:latest
         imagePullPolicy: IfNotPresent
         env:
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:mysql://mysql:3306/recette_db?createDatabaseIfNotExist=true"
+          value: "jdbc:mysql://mysql:3306/recette_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true"
         - name: SPRING_DATASOURCE_USERNAME
           value: "root"
         - name: SPRING_DATASOURCE_PASSWORD
           value: "root123"
+        - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+          value: "update"
         ports:
         - containerPort: 8090
         resources:
@@ -91,14 +130,18 @@ spec:
           httpGet:
             path: /actuator/health
             port: 8090
-          initialDelaySeconds: 30
+          initialDelaySeconds: 60
           periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
         livenessProbe:
           httpGet:
             path: /actuator/health
             port: 8090
-          initialDelaySeconds: 60
+          initialDelaySeconds: 90
           periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 5
 ---
 # MS-Persistance Service
 apiVersion: v1
@@ -130,6 +173,22 @@ spec:
       labels:
         app: ms-recette
     spec:
+      initContainers:
+      - name: wait-for-ms-persistance
+        image: busybox:1.36
+        command: ['sh', '-c']
+        args:
+        - |
+          echo "⏳ Waiting for MS-Persistance to be ready..."
+          until nc -z ms-persistance 8090; do
+            echo "MS-Persistance not ready yet, waiting 5s..."
+            sleep 5
+          done
+          echo "✅ MS-Persistance is ready!"
+          # Attendre 10 secondes supplémentaires pour que MS-Persistance soit complètement initialisé
+          echo "⏳ Waiting additional 10s for MS-Persistance initialization..."
+          sleep 10
+          echo "✅ Ready to start MS-Recette!"
       containers:
       - name: ms-recette
         image: ms-recette:latest
@@ -152,14 +211,18 @@ spec:
           httpGet:
             path: /actuator/health
             port: 8081
-          initialDelaySeconds: 30
+          initialDelaySeconds: 60
           periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
         livenessProbe:
           httpGet:
             path: /actuator/health
             port: 8081
-          initialDelaySeconds: 60
+          initialDelaySeconds: 90
           periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 5
 ---
 # MS-Recette Service
 apiVersion: v1
