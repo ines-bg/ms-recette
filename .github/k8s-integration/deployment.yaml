@@ -117,6 +117,12 @@ spec:
           value: "root123"
         - name: SPRING_JPA_HIBERNATE_DDL_AUTO
           value: "update"
+        - name: SPRING_JPA_SHOW_SQL
+          value: "true"
+        - name: SPRING_JPA_FORMAT_SQL
+          value: "true"
+        - name: SPRING_JPA_USE_SQL_COMMENTS
+          value: "false"
         - name: SERVER_PORT
           value: "8090"
         - name: LOG_LEVEL_ROOT
