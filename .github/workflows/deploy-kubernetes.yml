@@ -248,16 +248,25 @@ jobs:
       - name: Configure Newman environment
         working-directory: ./tests/newman
         run: |
-          echo "📝 Configuring Newman with service URL..."
+          echo "📝 Configuring Newman with service URLs..."
           SERVICE_URL="${{ steps.endpoint.outputs.service_url }}"
           
-          jq --arg url "$SERVICE_URL" \
-            '(.values[] | select(.key == "baseUrl") | .value) = $url' \
+          # Extraire l'IP et calculer l'URL de MS-Persistance
+          MINIKUBE_IP=$(echo $SERVICE_URL | sed -E 's|http://([^:]+):.*|\1|')
+          PERSISTANCE_URL="http://${MINIKUBE_IP}:30090"
+          
+          echo "🔗 MS-Recette URL: $SERVICE_URL"
+          echo "🔗 MS-Persistance URL: $PERSISTANCE_URL"
+          
+          # Mettre à jour les deux URLs dans env.json
+          jq --arg recetteUrl "$SERVICE_URL" --arg persistanceUrl "$PERSISTANCE_URL" \
+            '(.values[] | select(.key == "baseUrl") | .value) = $recetteUrl |
+             (.values[] | select(.key == "persistanceUrl") | .value) = $persistanceUrl' \
             env.json > env.tmp.json
           
           echo "📋 Environment configuration:"
           cat env.tmp.json | jq '.'
-          echo "✅ Environment configured with URL: $SERVICE_URL"
+          echo "✅ Environment configured with both service URLs"
 
       - name: Run Newman integration tests
         working-directory: ./tests/newman

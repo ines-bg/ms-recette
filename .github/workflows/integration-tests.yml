@@ -91,18 +91,21 @@ jobs:
       - name: Update environment with service URL
         working-directory: ./tests/newman
         run: |
-          echo "📝 Configuring Newman environment with service URL..."
-          echo "🎯 Base URL: ${{ env.SERVICE_URL }}"
+          echo "📝 Configuring Newman environment with service URLs..."
+          echo "🎯 MS-Recette URL: ${{ env.SERVICE_URL }}"
           
-          # Créer le fichier d'environnement temporaire avec l'URL du service
-          jq --arg url "${{ env.SERVICE_URL }}" \
-            '(.values[] | select(.key == "baseUrl") | .value) = $url' \
+          MS_PERSISTANCE_URL=$(echo ${{ env.SERVICE_URL }} | sed 's/:30081/:30090/' | sed 's/:8081/:8090/')
+          echo "🎯 MS-Persistance URL: $MS_PERSISTANCE_URL"
+          
+          jq --arg recetteUrl "${{ env.SERVICE_URL }}" --arg persistanceUrl "$MS_PERSISTANCE_URL" \
+            '(.values[] | select(.key == "baseUrl") | .value) = $recetteUrl |
+             (.values[] | select(.key == "persistanceUrl") | .value) = $persistanceUrl' \
             env.json > env.tmp.json
           
           echo "📋 Environment configuration:"
           cat env.tmp.json | jq '.'
           
-          echo "✅ Environment configured"
+          echo "✅ Environment configured with both service URLs"
 
       - name: Setup test data in MS-Persistance
         run: |

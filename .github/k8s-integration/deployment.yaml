@@ -175,7 +175,8 @@ spec:
   ports:
   - port: 8090
     targetPort: 8090
-  type: ClusterIP
+    nodePort: 30090
+  type: NodePort
 ---
 # MS-Recette Deployment
 apiVersion: apps/v1
