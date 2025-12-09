@@ -148,12 +148,12 @@ jobs:
 
       - name: Wait for MS-Persistance to be ready
         run: |
-          echo "⏳ Waiting for MS-Persistance to be ready (max 180s)..."
-          kubectl wait --for=condition=ready pod -l app=ms-persistance -n ${{ env.NAMESPACE }} --timeout=180s || {
+          echo "⏳ Waiting for MS-Persistance to be ready (max 300s)..."
+          kubectl wait --for=condition=ready pod -l app=ms-persistance -n ${{ env.NAMESPACE }} --timeout=300s || {
             echo "❌ MS-Persistance not ready!"
             kubectl get pods -n ${{ env.NAMESPACE }} -l app=ms-persistance -o wide
             kubectl describe pod -l app=ms-persistance -n ${{ env.NAMESPACE }}
-            kubectl logs -l app=ms-persistance -n ${{ env.NAMESPACE }} --tail=50 || true
+            kubectl logs -l app=ms-persistance -n ${{ env.NAMESPACE }} --tail=100 || true
             kubectl logs -l app=mysql -n ${{ env.NAMESPACE }} --tail=30 || true
             kubectl get events -n ${{ env.NAMESPACE }} --sort-by='.lastTimestamp' | tail -15
             exit 1

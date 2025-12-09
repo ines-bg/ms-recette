@@ -241,16 +241,16 @@ spec:
           httpGet:
             path: /actuator/health
             port: 8090
-          initialDelaySeconds: 30
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 15
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 20
         livenessProbe:
           httpGet:
             path: /actuator/health
             port: 8090
-          initialDelaySeconds: 60
-          periodSeconds: 10
+          initialDelaySeconds: 120
+          periodSeconds: 15
           timeoutSeconds: 5
           failureThreshold: 5
 ---
