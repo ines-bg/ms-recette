@@ -1,5 +1,7 @@
 package com.springbootTemplate.univ.soa.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.springbootTemplate.univ.soa.response.DifficulteEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
@@ -16,6 +18,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Requête pour créer une nouvelle recette")
 public class RecetteCreateRequest {
 
