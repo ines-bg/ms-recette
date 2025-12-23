@@ -55,6 +55,21 @@ public class RecetteServiceImpl implements RecetteService {
     }
 
     @Override
+    @Cacheable(value = "recettesEnAttente", unless = "#result == null || #result.isEmpty()")
+    public List<RecetteResponse> getRecettesEnAttente() {
+        log.info("Récupération des recettes en attente de validation");
+
+        try {
+            List<RecetteResponse> recettes = recetteClient.getRecettesEnAttente();
+            log.info("{} recettes en attente récupérées", recettes.size());
+            return recettes;
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des recettes en attente: {}", e.getMessage());
+            throw new RuntimeException("Impossible de récupérer les recettes en attente: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
     @Cacheable(value = "recette", key = "#id", unless = "#result == null")
     public RecetteResponse getRecetteById(Long id) {
         log.info("Récupération de la recette avec l'ID: {}", id);
@@ -166,8 +181,8 @@ public class RecetteServiceImpl implements RecetteService {
     }
 
     @Override
-    @CacheEvict(value = {"recette", "recettes", "recettesByCategorie", "recetteStats"},
-            key = "#id", allEntries = true)
+    @CacheEvict(value = {"recette", "recettes", "recettesEnAttente", "recettesByCategorie", "recetteStats"},
+            allEntries = true)
     public RecetteResponse updateRecette(Long id, RecetteUpdateRequest request) {
         log.info("Mise à jour de la recette: {}", id);
 
@@ -190,8 +205,8 @@ public class RecetteServiceImpl implements RecetteService {
     }
 
     @Override
-    @CacheEvict(value = {"recette", "recettes", "recettesByCategorie", "recetteStats"},
-            key = "#id", allEntries = true)
+    @CacheEvict(value = {"recette", "recettes", "recettesEnAttente", "recettesByCategorie", "recetteStats"},
+            allEntries = true)
     public void deleteRecette(Long id) {
         log.info("Suppression de la recette: {}", id);
 
@@ -208,6 +223,44 @@ public class RecetteServiceImpl implements RecetteService {
         } catch (Exception e) {
             log.error("Erreur lors de la suppression de la recette: {}", e.getMessage());
             throw new RuntimeException("Impossible de supprimer la recette: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    @CacheEvict(value = {"recette", "recettes", "recettesEnAttente", "recettesByCategorie", "recetteStats"},
+            allEntries = true)
+    public RecetteResponse validerRecette(Long id) {
+        log.info("Validation de la recette: {}", id);
+
+        try {
+            RecetteResponse response = recetteClient.validerRecette(id);
+            log.info("Recette validée avec succès - ID: {} - Statut: {}", id, response.getStatut());
+            return response;
+        } catch (RuntimeException e) {
+            log.error("Erreur lors de la validation de la recette {}: {}", id, e.getMessage());
+            throw new RecetteNotFoundException("Recette non trouvée avec l'ID: " + id);
+        }
+    }
+
+    @Override
+    @CacheEvict(value = {"recette", "recettes", "recettesEnAttente", "recettesByCategorie", "recetteStats"},
+            allEntries = true)
+    public RecetteResponse rejeterRecette(Long id, String motif) {
+        log.info("Rejet de la recette: {} avec motif: {}", id, motif);
+
+        try {
+            if (motif == null || motif.trim().isEmpty()) {
+                throw new IllegalArgumentException("Le motif de rejet est obligatoire");
+            }
+
+            RecetteResponse response = recetteClient.rejeterRecette(id, motif);
+            log.info("Recette rejetée avec succès - ID: {} - Statut: {}", id, response.getStatut());
+            return response;
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            log.error("Erreur lors du rejet de la recette {}: {}", id, e.getMessage());
+            throw new RecetteNotFoundException("Recette non trouvée avec l'ID: " + id);
         }
     }
 

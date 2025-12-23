@@ -154,5 +154,94 @@ class RecetteControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("false"));
     }
+
+    @Test
+    @DisplayName("GET /api/recettes/en-attente - devrait retourner les recettes en attente")
+    void testGetRecettesEnAttente_Success() throws Exception {
+        recetteResponse.setStatut(com.springbootTemplate.univ.soa.response.StatutRecetteEnum.EN_ATTENTE);
+        recetteResponse.setActif(false);
+        List<RecetteResponse> recettes = Arrays.asList(recetteResponse);
+
+        when(recetteService.getRecettesEnAttente()).thenReturn(recettes);
+
+        mockMvc.perform(get("/api/recettes/en-attente"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].titre").value("Spaghetti Carbonara"))
+                .andExpect(jsonPath("$[0].statut").value("EN_ATTENTE"))
+                .andExpect(jsonPath("$[0].actif").value(false));
+    }
+
+    @Test
+    @DisplayName("PUT /api/recettes/{id}/valider - devrait valider une recette")
+    void testValiderRecette_Success() throws Exception {
+        recetteResponse.setActif(true);
+        recetteResponse.setStatut(com.springbootTemplate.univ.soa.response.StatutRecetteEnum.VALIDEE);
+
+        when(recetteService.validerRecette(1L)).thenReturn(recetteResponse);
+
+        mockMvc.perform(put("/api/recettes/1/valider"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.actif").value(true))
+                .andExpect(jsonPath("$.statut").value("VALIDEE"));
+    }
+
+    @Test
+    @DisplayName("PUT /api/recettes/{id}/rejeter - devrait rejeter une recette avec motif")
+    void testRejeterRecette_Success() throws Exception {
+        String motif = "Recette incomplète";
+        recetteResponse.setActif(false);
+        recetteResponse.setStatut(com.springbootTemplate.univ.soa.response.StatutRecetteEnum.REJETEE);
+        recetteResponse.setMotifRejet(motif);
+
+        when(recetteService.rejeterRecette(anyLong(), any(String.class)))
+                .thenReturn(recetteResponse);
+
+        String requestBody = String.format("""
+                {
+                  "motif": "%s"
+                }
+                """, motif);
+
+        mockMvc.perform(put("/api/recettes/1/rejeter")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.actif").value(false))
+                .andExpect(jsonPath("$.statut").value("REJETEE"))
+                .andExpect(jsonPath("$.motifRejet").value(motif));
+    }
+
+    @Test
+    @DisplayName("GET /api/recettes/populaires - devrait retourner les recettes populaires")
+    void testGetPopularRecettes_Success() throws Exception {
+        recetteResponse.setNoteMoyenne(4.8);
+        recetteResponse.setNombreFeedbacks(50);
+        List<RecetteResponse> recettes = Arrays.asList(recetteResponse);
+
+        when(recetteService.getPopularRecettes(10)).thenReturn(recettes);
+
+        mockMvc.perform(get("/api/recettes/populaires")
+                        .param("limit", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].noteMoyenne").value(4.8));
+    }
+
+    @Test
+    @DisplayName("GET /api/recettes/recentes - devrait retourner les recettes récentes")
+    void testGetRecentRecettes_Success() throws Exception {
+        recetteResponse.setDateCreation(java.time.LocalDateTime.now());
+        List<RecetteResponse> recettes = Arrays.asList(recetteResponse);
+
+        when(recetteService.getRecentRecettes(10)).thenReturn(recettes);
+
+        mockMvc.perform(get("/api/recettes/recentes")
+                        .param("limit", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1));
+    }
 }
 

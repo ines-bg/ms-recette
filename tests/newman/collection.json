@@ -453,20 +453,37 @@
       ]
     },
     {
-      "name": "5. File Operations (3 tests)",
+      "name": "5. File Operations - Removed (not in ms-recette)",
+      "item": []
+    },
+    {
+      "name": "6. Validation & Workflow Operations (3 tests)",
       "item": [
         {
-          "name": "T14 - Get Fichiers for Recette",
+          "name": "T14 - Get Recettes En Attente",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"T14: Get fichiers for recette\", function () {",
-                  "    pm.expect([200, 404, 503]).to.include(pm.response.code);",
+                  "pm.test(\"T14: Get recettes en attente\", function () {",
+                  "    pm.expect([200, 400, 503]).to.include(pm.response.code);",
                   "    if (pm.response.code === 200) {",
                   "        var jsonData = pm.response.json();",
                   "        pm.expect(jsonData).to.be.an('array');",
+                  "        console.log('T14: ✅ Recettes en attente:', jsonData.length);",
+                  "        ",
+                  "        // Vérifier si notre recette créée est dans la liste",
+                  "        var recetteId = pm.environment.get('recetteId');",
+                  "        if (recetteId && jsonData.length > 0) {",
+                  "            var found = jsonData.find(r => r.id == recetteId);",
+                  "            if (found) {",
+                  "                console.log('T14: ✅ Recette trouvée:', found.titre);",
+                  "                console.log('T14: Statut:', found.statut, '| Actif:', found.actif);",
+                  "            }",
+                  "        }",
+                  "    } else if (pm.response.code === 400) {",
+                  "        console.log('T14: ⚠️ Erreur 400 - vérifier ms-persistance');",
                   "    }",
                   "});"
                 ],
@@ -478,24 +495,48 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/recettes/{{recetteId}}/fichiers",
+              "raw": "{{baseUrl}}/api/recettes/en-attente",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "recettes", "{{recetteId}}", "fichiers"]
+              "path": ["api", "recettes", "en-attente"]
             }
           }
         },
         {
-          "name": "T15 - Get Images for Recette",
+          "name": "T15 - Valider Recette",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"T15: Get images for recette\", function () {",
-                  "    pm.expect([200, 404, 503]).to.include(pm.response.code);",
+                  "pm.test(\"T15: Valider recette\", function () {",
+                  "    pm.expect([200, 400, 404, 503]).to.include(pm.response.code);",
                   "    if (pm.response.code === 200) {",
                   "        var jsonData = pm.response.json();",
-                  "        pm.expect(jsonData).to.be.an('array');",
+                  "        pm.expect(jsonData).to.have.property('id');",
+                  "        pm.expect(jsonData).to.have.property('actif');",
+                  "        pm.expect(jsonData).to.have.property('statut');",
+                  "        ",
+                  "        console.log('T15: ✅ VALIDATION RÉUSSIE!');",
+                  "        console.log('T15: ID:', jsonData.id);",
+                  "        console.log('T15: Titre:', jsonData.titre);",
+                  "        console.log('T15: Statut:', jsonData.statut, '(devrait être VALIDEE)');",
+                  "        console.log('T15: Actif:', jsonData.actif, '(devrait être true)');",
+                  "        ",
+                  "        // Vérification stricte",
+                  "        if (jsonData.actif !== undefined) {",
+                  "            pm.expect(jsonData.actif).to.be.true;",
+                  "        }",
+                  "        if (jsonData.statut) {",
+                  "            pm.expect(jsonData.statut).to.equal('VALIDEE');",
+                  "        }",
+                  "    } else if (pm.response.code === 400) {",
+                  "        console.log('T15: ⚠️ Erreur 400 - MS-Persistance error');",
+                  "        var error = pm.response.json();",
+                  "        console.log('T15: Message:', error.message || error.error);",
+                  "    } else if (pm.response.code === 404) {",
+                  "        console.log('T15: ❌ Recette non trouvée (ID:', pm.environment.get('recetteId'), ')');",
+                  "    } else {",
+                  "        console.log('T15: ⚠️ Service indisponible');",
                   "    }",
                   "});"
                 ],
@@ -504,27 +545,50 @@
             }
           ],
           "request": {
-            "method": "GET",
+            "method": "PUT",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/recettes/{{recetteId}}/fichiers/images",
+              "raw": "{{baseUrl}}/api/recettes/{{recetteId}}/valider",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "recettes", "{{recetteId}}", "fichiers", "images"]
+              "path": ["api", "recettes", "{{recetteId}}", "valider"]
             }
           }
         },
         {
-          "name": "T16 - Get Documents for Recette",
+          "name": "T16 - Rejeter Recette",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"T16: Get documents for recette\", function () {",
-                  "    pm.expect([200, 404, 503]).to.include(pm.response.code);",
+                  "pm.test(\"T16: Rejeter recette avec motif\", function () {",
+                  "    pm.expect([200, 400, 404, 503]).to.include(pm.response.code);",
                   "    if (pm.response.code === 200) {",
                   "        var jsonData = pm.response.json();",
-                  "        pm.expect(jsonData).to.be.an('array');",
+                  "        pm.expect(jsonData).to.have.property('id');",
+                  "        pm.expect(jsonData).to.have.property('statut');",
+                  "        pm.expect(jsonData).to.have.property('motifRejet');",
+                  "        ",
+                  "        console.log('T16: ✅ REJET RÉUSSI!');",
+                  "        console.log('T16: ID:', jsonData.id);",
+                  "        console.log('T16: Titre:', jsonData.titre);",
+                  "        console.log('T16: Statut:', jsonData.statut, '(devrait être REJETEE)');",
+                  "        console.log('T16: Actif:', jsonData.actif, '(devrait être false)');",
+                  "        console.log('T16: Motif:', jsonData.motifRejet);",
+                  "        ",
+                  "        // Vérification stricte",
+                  "        if (jsonData.actif !== undefined) {",
+                  "            pm.expect(jsonData.actif).to.be.false;",
+                  "        }",
+                  "        if (jsonData.statut) {",
+                  "            pm.expect(jsonData.statut).to.equal('REJETEE');",
+                  "        }",
+                  "    } else if (pm.response.code === 400) {",
+                  "        console.log('T16: ⚠️ Erreur 400 - Motif invalide ou MS-Persistance error');",
+                  "        var error = pm.response.json();",
+                  "        console.log('T16: Message:', error.message || error.error);",
+                  "    } else if (pm.response.code === 404) {",
+                  "        console.log('T16: ❌ Recette non trouvée pour rejet');",
                   "    }",
                   "});"
                 ],
@@ -533,19 +597,28 @@
             }
           ],
           "request": {
-            "method": "GET",
-            "header": [],
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motif\": \"Recette incomplète - Manque d'informations nutritionnelles\"\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/recettes/{{recetteId}}/fichiers/documents",
+              "raw": "{{baseUrl}}/api/recettes/{{recetteId}}/rejeter",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "recettes", "{{recetteId}}", "fichiers", "documents"]
+              "path": ["api", "recettes", "{{recetteId}}", "rejeter"]
             }
           }
         }
       ]
     },
     {
-      "name": "6. Error Handling Tests (5 tests)",
+      "name": "7. Error Handling Tests (5 tests)",
       "item": [
         {
           "name": "T17 - Get Non-Existent Recette",
@@ -702,7 +775,7 @@
       ]
     },
     {
-      "name": "7. Cleanup (2 tests)",
+      "name": "8. Cleanup (2 tests)",
       "item": [
         {
           "name": "T22 - Delete Created Recette",

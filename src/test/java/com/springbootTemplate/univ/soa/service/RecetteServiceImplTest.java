@@ -333,5 +333,143 @@ class RecetteServiceImplTest {
         assertNotNull(result);
         assertEquals(0, result.size());
     }
+
+    @Test
+    @DisplayName("getRecettesEnAttente - devrait retourner la liste des recettes en attente")
+    void testGetRecettesEnAttente_Success() {
+        recetteResponse.setStatut(com.springbootTemplate.univ.soa.response.StatutRecetteEnum.EN_ATTENTE);
+        List<RecetteResponse> recettes = Arrays.asList(recetteResponse);
+        when(recetteClient.getRecettesEnAttente()).thenReturn(recettes);
+
+        List<RecetteResponse> result = recetteService.getRecettesEnAttente();
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(com.springbootTemplate.univ.soa.response.StatutRecetteEnum.EN_ATTENTE, result.get(0).getStatut());
+        verify(recetteClient, times(1)).getRecettesEnAttente();
+    }
+
+    @Test
+    @DisplayName("getRecettesEnAttente - devrait lancer une exception en cas d'erreur")
+    void testGetRecettesEnAttente_ThrowsException() {
+        when(recetteClient.getRecettesEnAttente())
+                .thenThrow(new RuntimeException("Service unavailable"));
+
+        assertThrows(RuntimeException.class, () -> recetteService.getRecettesEnAttente());
+    }
+
+    @Test
+    @DisplayName("validerRecette - devrait valider une recette avec succès")
+    void testValiderRecette_Success() {
+        recetteResponse.setActif(true);
+        recetteResponse.setStatut(com.springbootTemplate.univ.soa.response.StatutRecetteEnum.VALIDEE);
+
+        when(recetteClient.validerRecette(1L)).thenReturn(recetteResponse);
+
+        RecetteResponse result = recetteService.validerRecette(1L);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertTrue(result.getActif());
+        assertEquals(com.springbootTemplate.univ.soa.response.StatutRecetteEnum.VALIDEE, result.getStatut());
+        verify(recetteClient, times(1)).validerRecette(1L);
+    }
+
+    @Test
+    @DisplayName("validerRecette - devrait lancer RecetteNotFoundException si recette non trouvée")
+    void testValiderRecette_NotFound() {
+        when(recetteClient.validerRecette(999L))
+                .thenThrow(new RuntimeException("Recette non trouvée"));
+
+        assertThrows(RecetteNotFoundException.class, () -> recetteService.validerRecette(999L));
+    }
+
+    @Test
+    @DisplayName("rejeterRecette - devrait rejeter une recette avec succès")
+    void testRejeterRecette_Success() {
+        String motif = "Recette incomplète";
+        recetteResponse.setActif(false);
+        recetteResponse.setStatut(com.springbootTemplate.univ.soa.response.StatutRecetteEnum.REJETEE);
+        recetteResponse.setMotifRejet(motif);
+
+        when(recetteClient.rejeterRecette(1L, motif)).thenReturn(recetteResponse);
+
+        RecetteResponse result = recetteService.rejeterRecette(1L, motif);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertFalse(result.getActif());
+        assertEquals(com.springbootTemplate.univ.soa.response.StatutRecetteEnum.REJETEE, result.getStatut());
+        assertEquals(motif, result.getMotifRejet());
+        verify(recetteClient, times(1)).rejeterRecette(1L, motif);
+    }
+
+    @Test
+    @DisplayName("rejeterRecette - devrait lancer RecetteNotFoundException si recette non trouvée")
+    void testRejeterRecette_NotFound() {
+        when(recetteClient.rejeterRecette(999L, "Motif"))
+                .thenThrow(new RuntimeException("Recette non trouvée"));
+
+        assertThrows(RecetteNotFoundException.class, () ->
+            recetteService.rejeterRecette(999L, "Motif"));
+    }
+
+    @Test
+    @DisplayName("rejeterRecette - devrait lancer IllegalArgumentException si motif vide")
+    void testRejeterRecette_EmptyMotif() {
+        assertThrows(IllegalArgumentException.class, () ->
+            recetteService.rejeterRecette(1L, ""));
+    }
+
+    @Test
+    @DisplayName("rejeterRecette - devrait lancer IllegalArgumentException si motif null")
+    void testRejeterRecette_NullMotif() {
+        assertThrows(IllegalArgumentException.class, () ->
+            recetteService.rejeterRecette(1L, null));
+    }
+
+    @Test
+    @DisplayName("getPopularRecettes - devrait retourner recettes populaires triées")
+    void testGetPopularRecettes_Success() {
+        RecetteResponse recette2 = new RecetteResponse();
+        recette2.setId(2L);
+        recette2.setTitre("Recette 2");
+        recette2.setNoteMoyenne(4.8);
+        recette2.setNombreFeedbacks(50);
+
+        recetteResponse.setNoteMoyenne(4.5);
+        recetteResponse.setNombreFeedbacks(30);
+
+        List<RecetteResponse> allRecettes = Arrays.asList(recette2, recetteResponse);
+        when(recetteClient.getAllRecettes()).thenReturn(allRecettes);
+
+        List<RecetteResponse> result = recetteService.getPopularRecettes(2);
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        // La première devrait être celle avec la meilleure note
+        assertEquals(4.8, result.get(0).getNoteMoyenne());
+    }
+
+    @Test
+    @DisplayName("getRecentRecettes - devrait retourner recettes récentes triées")
+    void testGetRecentRecettes_Success() {
+        RecetteResponse recette2 = new RecetteResponse();
+        recette2.setId(2L);
+        recette2.setTitre("Recette 2");
+        recette2.setDateCreation(java.time.LocalDateTime.now().minusDays(1));
+
+        recetteResponse.setDateCreation(java.time.LocalDateTime.now());
+
+        List<RecetteResponse> allRecettes = Arrays.asList(recette2, recetteResponse);
+        when(recetteClient.getAllRecettes()).thenReturn(allRecettes);
+
+        List<RecetteResponse> result = recetteService.getRecentRecettes(2);
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        // La première devrait être la plus récente
+        assertEquals(recetteResponse.getId(), result.get(0).getId());
+    }
 }
 

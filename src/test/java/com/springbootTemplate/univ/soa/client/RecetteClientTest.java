@@ -318,4 +318,159 @@ class RecetteClientTest {
 
         assertThrows(RuntimeException.class, () -> recetteClient.getRecetteStats(1L));
     }
+
+    @Test
+    @DisplayName("getRecettesEnAttente - devrait retourner la liste des recettes en attente")
+    void testGetRecettesEnAttente_Success() {
+        List<RecetteResponse> recettes = Arrays.asList(recetteResponse);
+        ResponseEntity<List<RecetteResponse>> responseEntity = new ResponseEntity<>(recettes, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.GET),
+                isNull(),
+                any(ParameterizedTypeReference.class)
+        )).thenReturn(responseEntity);
+
+        List<RecetteResponse> result = recetteClient.getRecettesEnAttente();
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(restTemplate, times(1)).exchange(
+                anyString(),
+                eq(HttpMethod.GET),
+                isNull(),
+                any(ParameterizedTypeReference.class)
+        );
+    }
+
+    @Test
+    @DisplayName("getRecettesEnAttente - devrait lancer une exception en cas d'erreur")
+    void testGetRecettesEnAttente_ThrowsException() {
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.GET),
+                isNull(),
+                any(ParameterizedTypeReference.class)
+        )).thenThrow(new RuntimeException("Service unavailable"));
+
+        assertThrows(RuntimeException.class, () -> recetteClient.getRecettesEnAttente());
+    }
+
+    @Test
+    @DisplayName("validerRecette - devrait valider une recette avec succès")
+    void testValiderRecette_Success() {
+        recetteResponse.setActif(true);
+        recetteResponse.setStatut(com.springbootTemplate.univ.soa.response.StatutRecetteEnum.VALIDEE);
+
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.PUT),
+                isNull(),
+                eq(RecetteResponse.class)
+        )).thenReturn(new ResponseEntity<>(recetteResponse, HttpStatus.OK));
+
+        RecetteResponse result = recetteClient.validerRecette(1L);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        verify(restTemplate, times(1)).exchange(
+                anyString(),
+                eq(HttpMethod.PUT),
+                isNull(),
+                eq(RecetteResponse.class)
+        );
+    }
+
+    @Test
+    @DisplayName("validerRecette - devrait lancer une exception si recette non trouvée")
+    void testValiderRecette_NotFound() {
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.PUT),
+                isNull(),
+                eq(RecetteResponse.class)
+        )).thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+
+        assertThrows(RuntimeException.class, () -> recetteClient.validerRecette(999L));
+    }
+
+    @Test
+    @DisplayName("validerRecette - devrait lancer une exception en cas d'erreur générique")
+    void testValiderRecette_GenericError() {
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.PUT),
+                isNull(),
+                eq(RecetteResponse.class)
+        )).thenThrow(new RuntimeException("Service error"));
+
+        assertThrows(RuntimeException.class, () -> recetteClient.validerRecette(1L));
+    }
+
+    @Test
+    @DisplayName("rejeterRecette - devrait rejeter une recette avec succès")
+    void testRejeterRecette_Success() {
+        recetteResponse.setActif(false);
+        recetteResponse.setStatut(com.springbootTemplate.univ.soa.response.StatutRecetteEnum.REJETEE);
+        recetteResponse.setMotifRejet("Recette incomplète");
+
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.PUT),
+                any(HttpEntity.class),
+                eq(RecetteResponse.class)
+        )).thenReturn(new ResponseEntity<>(recetteResponse, HttpStatus.OK));
+
+        RecetteResponse result = recetteClient.rejeterRecette(1L, "Recette incomplète");
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("Recette incomplète", result.getMotifRejet());
+        verify(restTemplate, times(1)).exchange(
+                anyString(),
+                eq(HttpMethod.PUT),
+                any(HttpEntity.class),
+                eq(RecetteResponse.class)
+        );
+    }
+
+    @Test
+    @DisplayName("rejeterRecette - devrait lancer une exception si recette non trouvée")
+    void testRejeterRecette_NotFound() {
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.PUT),
+                any(HttpEntity.class),
+                eq(RecetteResponse.class)
+        )).thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+
+        assertThrows(RuntimeException.class, () -> recetteClient.rejeterRecette(999L, "Motif"));
+    }
+
+    @Test
+    @DisplayName("rejeterRecette - devrait lancer une exception si motif invalide")
+    void testRejeterRecette_BadRequest() {
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.PUT),
+                any(HttpEntity.class),
+                eq(RecetteResponse.class)
+        )).thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+
+        assertThrows(RuntimeException.class, () -> recetteClient.rejeterRecette(1L, ""));
+    }
+
+    @Test
+    @DisplayName("rejeterRecette - devrait lancer une exception en cas d'erreur générique")
+    void testRejeterRecette_GenericError() {
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.PUT),
+                any(HttpEntity.class),
+                eq(RecetteResponse.class)
+        )).thenThrow(new RuntimeException("Service error"));
+
+        assertThrows(RuntimeException.class, () -> recetteClient.rejeterRecette(1L, "Motif"));
+    }
 }
