@@ -181,8 +181,8 @@ public class RecetteServiceImpl implements RecetteService {
     }
 
     @Override
-    @CacheEvict(value = {"recette", "recettes", "recettesByCategorie", "recetteStats"},
-            key = "#id", allEntries = true)
+    @CacheEvict(value = {"recette", "recettes", "recettesEnAttente", "recettesByCategorie", "recetteStats"},
+            allEntries = true)
     public RecetteResponse updateRecette(Long id, RecetteUpdateRequest request) {
         log.info("Mise à jour de la recette: {}", id);
 
@@ -205,8 +205,8 @@ public class RecetteServiceImpl implements RecetteService {
     }
 
     @Override
-    @CacheEvict(value = {"recette", "recettes", "recettesByCategorie", "recetteStats"},
-            key = "#id", allEntries = true)
+    @CacheEvict(value = {"recette", "recettes", "recettesEnAttente", "recettesByCategorie", "recetteStats"},
+            allEntries = true)
     public void deleteRecette(Long id) {
         log.info("Suppression de la recette: {}", id);
 
@@ -228,7 +228,7 @@ public class RecetteServiceImpl implements RecetteService {
 
     @Override
     @CacheEvict(value = {"recette", "recettes", "recettesEnAttente", "recettesByCategorie", "recetteStats"},
-            key = "#id", allEntries = true)
+            allEntries = true)
     public RecetteResponse validerRecette(Long id) {
         log.info("Validation de la recette: {}", id);
 
@@ -244,7 +244,7 @@ public class RecetteServiceImpl implements RecetteService {
 
     @Override
     @CacheEvict(value = {"recette", "recettes", "recettesEnAttente", "recettesByCategorie", "recetteStats"},
-            key = "#id", allEntries = true)
+            allEntries = true)
     public RecetteResponse rejeterRecette(Long id, String motif) {
         log.info("Rejet de la recette: {} avec motif: {}", id, motif);
 

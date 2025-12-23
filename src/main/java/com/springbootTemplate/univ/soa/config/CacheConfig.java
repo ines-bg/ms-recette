@@ -21,6 +21,7 @@ public class CacheConfig {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager(
                 "recettes",           // Cache pour toutes les recettes
                 "recette",            // Cache pour une recette spécifique
+                "recettesEnAttente",  // Cache pour les recettes en attente de validation
                 "recettesByCategorie",// Cache par catégorie
                 "recetteStats"        // Cache des statistiques
         );
