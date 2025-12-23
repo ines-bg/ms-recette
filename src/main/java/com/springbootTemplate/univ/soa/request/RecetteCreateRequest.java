@@ -3,6 +3,7 @@ package com.springbootTemplate.univ.soa.request;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.springbootTemplate.univ.soa.response.DifficulteEnum;
+import com.springbootTemplate.univ.soa.response.StatutRecetteEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -60,5 +61,14 @@ public class RecetteCreateRequest {
 
     @Schema(description = "Tags associés à la recette", example = "[\"végétarien\", \"rapide\", \"italien\"]")
     private List<String> tags;
-}
 
+    @Schema(description = "Indique si la recette est active", example = "false")
+    private Boolean actif;
+
+    @Schema(description = "Statut métier de la recette", example = "EN_ATTENTE")
+    private StatutRecetteEnum statut;
+
+    @Schema(description = "Motif de rejet si la recette est refusée")
+    @Size(max = 500, message = "Le motif de rejet ne peut pas dépasser 500 caractères")
+    private String motifRejet;
+}

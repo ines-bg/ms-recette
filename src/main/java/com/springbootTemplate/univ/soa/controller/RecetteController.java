@@ -55,6 +55,16 @@ public class RecetteController {
         return ResponseEntity.ok(recettes);
     }
 
+    @GetMapping("/en-attente")
+    @Operation(summary = "Récupérer les recettes en attente de validation",
+            description = "Récupère toutes les recettes en attente de validation par un administrateur")
+    @ApiResponse(responseCode = "200", description = "Liste des recettes en attente récupérée avec succès")
+    public ResponseEntity<List<RecetteResponse>> getRecettesEnAttente() {
+        log.info("GET /api/recettes/en-attente - Récupération des recettes en attente");
+        List<RecetteResponse> recettes = recetteService.getRecettesEnAttente();
+        return ResponseEntity.ok(recettes);
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Récupérer une recette par ID", description = "Récupère les détails d'une recette spécifique")
     @ApiResponses(value = {
@@ -147,6 +157,39 @@ public class RecetteController {
         log.info("DELETE /api/recettes/{} - Suppression de la recette", id);
         recetteService.deleteRecette(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/valider")
+    @Operation(summary = "Valider une recette",
+            description = "Valide une recette en attente (actif=true, statut=VALIDEE)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Recette validée avec succès"),
+            @ApiResponse(responseCode = "404", description = "Recette non trouvée")
+    })
+    public ResponseEntity<RecetteResponse> validerRecette(
+            @Parameter(description = "ID de la recette", example = "1")
+            @PathVariable Long id) {
+        log.info("PUT /api/recettes/{}/valider - Validation de la recette", id);
+        RecetteResponse response = recetteService.validerRecette(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}/rejeter")
+    @Operation(summary = "Rejeter une recette",
+            description = "Rejette une recette avec un motif (statut=REJETEE, actif=false)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Recette rejetée avec succès"),
+            @ApiResponse(responseCode = "400", description = "Motif de rejet manquant ou invalide"),
+            @ApiResponse(responseCode = "404", description = "Recette non trouvée")
+    })
+    public ResponseEntity<RecetteResponse> rejeterRecette(
+            @Parameter(description = "ID de la recette", example = "1")
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, String> body) {
+        log.info("PUT /api/recettes/{}/rejeter - Rejet de la recette", id);
+        String motif = body != null ? body.get("motif") : null;
+        RecetteResponse response = recetteService.rejeterRecette(id, motif);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}/exists")

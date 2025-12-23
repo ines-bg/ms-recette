@@ -82,6 +82,31 @@ public class RecetteClient {
     }
 
     /**
+     * Récupérer les recettes en attente de validation
+     */
+    @Cacheable(value = "recettesEnAttente", unless = "#result == null || #result.isEmpty()")
+    public List<RecetteResponse> getRecettesEnAttente() {
+        String url = recetteServiceUrl + "/api/persistance/recettes/en-attente";
+        log.info("GET {} - Récupération des recettes en attente", url);
+
+        try {
+            ResponseEntity<List<RecetteResponse>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<RecetteResponse>>() {}
+            );
+
+            log.info("{} recettes en attente récupérées", response.getBody().size());
+            return response.getBody();
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des recettes en attente: {}", e.getMessage());
+            throw new RuntimeException("Erreur lors de la récupération des recettes en attente", e);
+        }
+    }
+
+    /**
      * Récupérer une recette par son ID avec cache
      */
     @Cacheable(value = "recette", key = "#id", unless = "#result == null")
@@ -224,6 +249,72 @@ public class RecetteClient {
         } catch (Exception e) {
             log.error("Erreur lors de la suppression de la recette: {}", e.getMessage());
             throw new RuntimeException("Erreur lors de la suppression de la recette", e);
+        }
+    }
+
+    /**
+     * Valider une recette (actif=true, statut=VALIDEE)
+     */
+    public RecetteResponse validerRecette(Long id) {
+        String url = recetteServiceUrl + "/api/persistance/recettes/" + id + "/valider";
+        log.info("PUT {} - Validation de la recette", url);
+
+        try {
+            ResponseEntity<RecetteResponse> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.PUT,
+                    null,
+                    RecetteResponse.class
+            );
+
+            log.info("Recette validée - ID: {}", id);
+            return response.getBody();
+
+        } catch (HttpClientErrorException.NotFound e) {
+            log.error("Recette non trouvée - ID: {}", id);
+            throw new RuntimeException("Recette non trouvée avec l'ID: " + id);
+        } catch (Exception e) {
+            log.error("Erreur lors de la validation de la recette: {}", e.getMessage());
+            throw new RuntimeException("Erreur lors de la validation de la recette", e);
+        }
+    }
+
+    /**
+     * Rejeter une recette avec motif (statut=REJETEE)
+     */
+    public RecetteResponse rejeterRecette(Long id, String motif) {
+        String url = recetteServiceUrl + "/api/persistance/recettes/" + id + "/rejeter";
+        log.info("PUT {} - Rejet de la recette avec motif: {}", url, motif);
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Corps de la requête avec le motif
+            java.util.Map<String, String> body = new java.util.HashMap<>();
+            body.put("motif", motif);
+
+            HttpEntity<java.util.Map<String, String>> httpRequest = new HttpEntity<>(body, headers);
+
+            ResponseEntity<RecetteResponse> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.PUT,
+                    httpRequest,
+                    RecetteResponse.class
+            );
+
+            log.info("Recette rejetée - ID: {}", id);
+            return response.getBody();
+
+        } catch (HttpClientErrorException.NotFound e) {
+            log.error("Recette non trouvée - ID: {}", id);
+            throw new RuntimeException("Recette non trouvée avec l'ID: " + id);
+        } catch (HttpClientErrorException.BadRequest e) {
+            log.error("Motif de rejet invalide pour la recette - ID: {}", id);
+            throw new RuntimeException("Motif de rejet requis pour rejeter la recette");
+        } catch (Exception e) {
+            log.error("Erreur lors du rejet de la recette: {}", e.getMessage());
+            throw new RuntimeException("Erreur lors du rejet de la recette", e);
         }
     }
 
