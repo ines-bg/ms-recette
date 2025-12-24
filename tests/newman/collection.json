@@ -107,7 +107,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"titre\": \"{{titre}}\",\n  \"tempsTotal\": 45,\n  \"kcal\": 350,\n  \"imageUrl\": \"https://example.com/test-image.jpg\",\n  \"difficulte\": \"{{difficulte}}\",\n  \"ingredients\": [\n    {\n      \"alimentId\": 1,\n      \"quantite\": 200.0,\n      \"unite\": \"GRAMME\",\n      \"principal\": true\n    }\n  ],\n  \"etapes\": [\n    {\n      \"ordre\": 1,\n      \"temps\": 15,\n      \"texte\": \"Préparer les ingrédients\"\n    },\n    {\n      \"ordre\": 2,\n      \"temps\": 30,\n      \"texte\": \"Faire cuire selon les instructions\"\n    }\n  ]\n}"
+              "raw": "{\n  \"titre\": \"{{titre}}\",\n  \"tempsTotal\": 45,\n  \"kcal\": 350,\n  \"imageUrl\": \"https://example.com/test-image.jpg\",\n  \"difficulte\": \"{{difficulte}}\",\n  \"ingredients\": [\n    {\n      \"alimentNom\": \"Pâtes\",\n      \"quantite\": 200.0,\n      \"unite\": \"GRAMME\",\n      \"principal\": true\n    }\n  ],\n  \"etapes\": [\n    {\n      \"ordre\": 1,\n      \"temps\": 15,\n      \"texte\": \"Préparer les ingrédients\"\n    },\n    {\n      \"ordre\": 2,\n      \"temps\": 30,\n      \"texte\": \"Faire cuire selon les instructions\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/recettes",
@@ -207,7 +207,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"titre\": \"{{titre}} - Updated\",\n  \"tempsTotal\": 50,\n  \"kcal\": 400,\n  \"imageUrl\": \"https://example.com/updated-image.jpg\",\n  \"difficulte\": \"MOYEN\",\n  \"ingredients\": [\n    {\n      \"alimentId\": 1,\n      \"quantite\": 250.0,\n      \"unite\": \"GRAMME\",\n      \"principal\": true\n    }\n  ],\n  \"etapes\": [\n    {\n      \"ordre\": 1,\n      \"temps\": 20,\n      \"texte\": \"Préparer les ingrédients mis à jour\"\n    },\n    {\n      \"ordre\": 2,\n      \"temps\": 30,\n      \"texte\": \"Cuire selon les nouvelles instructions\"\n    }\n  ]\n}"
+              "raw": "{\n  \"titre\": \"{{titre}} - Updated\",\n  \"tempsTotal\": 50,\n  \"kcal\": 400,\n  \"imageUrl\": \"https://example.com/updated-image.jpg\",\n  \"difficulte\": \"MOYEN\",\n  \"ingredients\": [\n    {\n      \"alimentNom\": \"Pâtes fraîches\",\n      \"quantite\": 250.0,\n      \"unite\": \"GRAMME\",\n      \"principal\": true\n    }\n  ],\n  \"etapes\": [\n    {\n      \"ordre\": 1,\n      \"temps\": 20,\n      \"texte\": \"Préparer les ingrédients mis à jour\"\n    },\n    {\n      \"ordre\": 2,\n      \"temps\": 30,\n      \"texte\": \"Cuire selon les nouvelles instructions\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/recettes/{{recetteId}}",
@@ -491,11 +491,53 @@
               "listen": "test",
               "script": {
                 "exec": [
+<<<<<<< Updated upstream
                   "pm.test(\"T15: Get images for recette\", function () {",
                   "    pm.expect([200, 404, 503]).to.include(pm.response.code);",
                   "    if (pm.response.code === 200) {",
                   "        var jsonData = pm.response.json();",
                   "        pm.expect(jsonData).to.be.an('array');",
+=======
+                  "pm.test(\"T15: Valider recette\", function () {",
+                  "    var recetteCreated = pm.environment.get('recetteCreated');",
+                  "    var recetteId = pm.environment.get('recetteId');",
+                  "    ",
+                  "    // Si aucune recette n'a été créée (503 dans T03), on skip ce test",
+                  "    if (recetteCreated === 'false' || recetteCreated === false) {",
+                  "        console.log('T15: ⏭️ SKIPPED - Aucune recette créée (MS-Persistance indisponible)');",
+                  "        pm.expect([404, 503]).to.include(pm.response.code);",
+                  "        return;",
+                  "    }",
+                  "    ",
+                  "    pm.expect([200, 400, 404, 503]).to.include(pm.response.code);",
+                  "    if (pm.response.code === 200) {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property('id');",
+                  "        pm.expect(jsonData).to.have.property('actif');",
+                  "        pm.expect(jsonData).to.have.property('statut');",
+                  "        ",
+                  "        console.log('T15: ✅ VALIDATION RÉUSSIE!');",
+                  "        console.log('T15: ID:', jsonData.id);",
+                  "        console.log('T15: Titre:', jsonData.titre);",
+                  "        console.log('T15: Statut:', jsonData.statut, '(devrait être VALIDEE)');",
+                  "        console.log('T15: Actif:', jsonData.actif, '(devrait être true)');",
+                  "        ",
+                  "        // Vérification stricte",
+                  "        if (jsonData.actif !== undefined) {",
+                  "            pm.expect(jsonData.actif).to.be.true;",
+                  "        }",
+                  "        if (jsonData.statut) {",
+                  "            pm.expect(jsonData.statut).to.equal('VALIDEE');",
+                  "        }",
+                  "    } else if (pm.response.code === 400) {",
+                  "        console.log('T15: ⚠️ Erreur 400 - MS-Persistance error');",
+                  "        var error = pm.response.json();",
+                  "        console.log('T15: Message:', error.message || error.error);",
+                  "    } else if (pm.response.code === 404) {",
+                  "        console.log('T15: ❌ Recette non trouvée (ID:', recetteId, ')');",
+                  "    } else {",
+                  "        console.log('T15: ⚠️ Service indisponible');",
+>>>>>>> Stashed changes
                   "    }",
                   "});"
                 ],
@@ -520,8 +562,22 @@
               "listen": "test",
               "script": {
                 "exec": [
+<<<<<<< Updated upstream
                   "pm.test(\"T16: Get documents for recette\", function () {",
                   "    pm.expect([200, 404, 503]).to.include(pm.response.code);",
+=======
+                  "pm.test(\"T16: Rejeter recette avec motif\", function () {",
+                  "    var recetteCreated = pm.environment.get('recetteCreated');",
+                  "    ",
+                  "    // Si aucune recette n'a été créée (503 dans T03), on skip ce test",
+                  "    if (recetteCreated === 'false' || recetteCreated === false) {",
+                  "        console.log('T16: ⏭️ SKIPPED - Aucune recette créée (MS-Persistance indisponible)');",
+                  "        pm.expect([404, 503]).to.include(pm.response.code);",
+                  "        return;",
+                  "    }",
+                  "    ",
+                  "    pm.expect([200, 400, 404, 503]).to.include(pm.response.code);",
+>>>>>>> Stashed changes
                   "    if (pm.response.code === 200) {",
                   "        var jsonData = pm.response.json();",
                   "        pm.expect(jsonData).to.be.an('array');",

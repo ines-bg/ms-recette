@@ -1,9 +1,9 @@
 package com.springbootTemplate.univ.soa.request;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.springbootTemplate.univ.soa.validation.ValidIngredient;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,12 +14,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@ValidIngredient(message = "L'ID ou le nom de l'aliment est requis pour chaque ingrédient")
 @Schema(description = "Ingrédient d'une recette")
 public class IngredientRequest {
 
-    @Schema(description = "ID de l'aliment", example = "5", required = true)
-    @NotNull(message = "L'ID de l'aliment est requis")
+    @Schema(description = "ID de l'aliment (optionnel si alimentNom est fourni)", example = "5")
     private Long alimentId;
+
+    @Schema(description = "Nom de l'aliment (optionnel si alimentId est fourni)", example = "Spaghetti")
+    private String alimentNom;
 
     @Schema(description = "Quantité", example = "200.0")
     @DecimalMin(value = "0.01", message = "La quantité doit être supérieure à 0")
