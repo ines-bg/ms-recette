@@ -48,6 +48,15 @@ public class RecetteResponse {
     @Schema(description = "Date de dernière modification", example = "2025-01-20T10:15:00")
     private LocalDateTime dateModification;
 
+    @Schema(description = "Indique si la recette est active", example = "true")
+    private Boolean actif;
+
+    @Schema(description = "Statut de validation de la recette", example = "VALIDEE")
+    private String statut;
+
+    @Schema(description = "Motif de rejet si la recette a été rejetée", example = "Ingrédients incomplets")
+    private String motifRejet;
+
     @Schema(description = "Liste des ingrédients")
     private List<IngredientResponse> ingredients;
 
