@@ -28,8 +28,10 @@ public class RecetteServiceImpl implements RecetteService {
     public RecetteResponse createRecette(RecetteCreateRequest request) {
         log.info("Création d'une nouvelle recette: {}", request.getTitre());
 
+        // Valider d'abord avant toute communication avec le client
+        validateRecetteCreateRequest(request);
+
         try {
-            validateRecetteCreateRequest(request);
             RecetteResponse response = recetteClient.createRecette(request);
             log.info("Recette créée avec succès - ID: {}", response.getId());
             return response;
@@ -171,13 +173,15 @@ public class RecetteServiceImpl implements RecetteService {
     public RecetteResponse updateRecette(Long id, RecetteUpdateRequest request) {
         log.info("Mise à jour de la recette: {}", id);
 
+        // Valider d'abord avant toute communication avec le client
+        validateRecetteUpdateRequest(request);
+
         try {
             // Vérifier que la recette existe
             if (!recetteClient.recetteExists(id)) {
                 throw new RecetteNotFoundException("Recette non trouvée avec l'ID: " + id);
             }
 
-            validateRecetteUpdateRequest(request);
             RecetteResponse response = recetteClient.updateRecette(id, request);
             log.info("Recette mise à jour avec succès - ID: {}", id);
             return response;
@@ -258,6 +262,60 @@ public class RecetteServiceImpl implements RecetteService {
         }
     }
 
+    @Override
+    public List<RecetteResponse> getRecettesEnAttente() {
+        log.info("Récupération des recettes en attente de validation");
+
+        try {
+            List<RecetteResponse> recettes = recetteClient.getRecettesEnAttente();
+            log.info("{} recettes en attente trouvées", recettes.size());
+            return recettes;
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des recettes en attente: {}", e.getMessage());
+            throw new RuntimeException("Erreur lors de la récupération des recettes en attente", e);
+        }
+    }
+
+    @Override
+    @CacheEvict(value = {"recette", "recettes"}, key = "#id", allEntries = true)
+    public RecetteResponse validerRecette(Long id) {
+        log.info("Validation de la recette: {}", id);
+
+        try {
+            RecetteResponse response = recetteClient.validerRecette(id);
+            log.info("Recette validée avec succès - ID: {}", id);
+            return response;
+        } catch (RuntimeException e) {
+            log.error("Erreur lors de la validation de la recette: {}", e.getMessage());
+            if (e.getMessage().contains("non trouvée")) {
+                throw new RecetteNotFoundException("Recette non trouvée avec l'ID: " + id);
+            }
+            throw new RuntimeException("Impossible de valider la recette: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    @CacheEvict(value = {"recette", "recettes"}, key = "#id", allEntries = true)
+    public RecetteResponse rejeterRecette(Long id, String motif) {
+        log.info("Rejet de la recette: {} - Motif: {}", id, motif);
+
+        if (motif == null || motif.trim().isEmpty()) {
+            throw new IllegalArgumentException("Le motif de rejet est obligatoire");
+        }
+
+        try {
+            RecetteResponse response = recetteClient.rejeterRecette(id, motif);
+            log.info("Recette rejetée avec succès - ID: {}", id);
+            return response;
+        } catch (RuntimeException e) {
+            log.error("Erreur lors du rejet de la recette: {}", e.getMessage());
+            if (e.getMessage().contains("non trouvée")) {
+                throw new RecetteNotFoundException("Recette non trouvée avec l'ID: " + id);
+            }
+            throw new RuntimeException("Impossible de rejeter la recette: " + e.getMessage(), e);
+        }
+    }
+
     // ========================================
     // MÉTHODES PRIVÉES - VALIDATION
     // ========================================
@@ -269,8 +327,12 @@ public class RecetteServiceImpl implements RecetteService {
 
         if (request.getIngredients() != null) {
             for (IngredientRequest ing : request.getIngredients()) {
-                if (ing.getAlimentId() == null) {
-                    throw new IllegalArgumentException("L'ID de l'aliment est requis pour chaque ingrédient");
+                // Accepter soit alimentId soit alimentNom (au moins un des deux)
+                boolean hasAlimentId = ing.getAlimentId() != null;
+                boolean hasAlimentNom = ing.getAlimentNom() != null && !ing.getAlimentNom().trim().isEmpty();
+
+                if (!hasAlimentId && !hasAlimentNom) {
+                    throw new IllegalArgumentException("L'ID ou le nom de l'aliment est requis pour chaque ingrédient");
                 }
             }
         }
@@ -294,8 +356,12 @@ public class RecetteServiceImpl implements RecetteService {
 
         if (request.getIngredients() != null) {
             for (IngredientRequest ing : request.getIngredients()) {
-                if (ing.getAlimentId() == null) {
-                    throw new IllegalArgumentException("L'ID de l'aliment est requis pour chaque ingrédient");
+                // Accepter soit alimentId soit alimentNom (au moins un des deux)
+                boolean hasAlimentId = ing.getAlimentId() != null;
+                boolean hasAlimentNom = ing.getAlimentNom() != null && !ing.getAlimentNom().trim().isEmpty();
+
+                if (!hasAlimentId && !hasAlimentNom) {
+                    throw new IllegalArgumentException("L'ID ou le nom de l'aliment est requis pour chaque ingrédient");
                 }
             }
         }

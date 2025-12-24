@@ -2,6 +2,8 @@ package com.springbootTemplate.univ.soa.service;
 
 import com.springbootTemplate.univ.soa.client.RecetteClient;
 import com.springbootTemplate.univ.soa.exception.RecetteNotFoundException;
+import com.springbootTemplate.univ.soa.request.EtapeRequest;
+import com.springbootTemplate.univ.soa.request.IngredientRequest;
 import com.springbootTemplate.univ.soa.request.RecetteCreateRequest;
 import com.springbootTemplate.univ.soa.request.RecetteSearchRequest;
 import com.springbootTemplate.univ.soa.request.RecetteUpdateRequest;
@@ -332,6 +334,148 @@ class RecetteServiceImplTest {
 
         assertNotNull(result);
         assertEquals(0, result.size());
+    }
+
+    @Test
+    @DisplayName("createRecette - devrait accepter un ingrédient avec alimentNom uniquement")
+    void testCreateRecette_WithAlimentNomOnly() {
+        RecetteCreateRequest request = new RecetteCreateRequest();
+        request.setTitre("Nouvelle Recette");
+        request.setDescription("Description");
+
+        IngredientRequest ingredient = IngredientRequest.builder()
+                .alimentNom("Tomate")
+                .quantite(200.0f)
+                .unite("GRAMME")
+                .principal(true)
+                .build();
+        request.setIngredients(Arrays.asList(ingredient));
+
+        EtapeRequest etape = EtapeRequest.builder()
+                .ordre(1)
+                .temps(10)
+                .texte("Couper les tomates")
+                .build();
+        request.setEtapes(Arrays.asList(etape));
+
+        when(recetteClient.createRecette(any(RecetteCreateRequest.class)))
+                .thenReturn(recetteResponse);
+
+        RecetteResponse result = recetteService.createRecette(request);
+
+        assertNotNull(result);
+        verify(recetteClient, times(1)).createRecette(any(RecetteCreateRequest.class));
+    }
+
+    @Test
+    @DisplayName("createRecette - devrait accepter un ingrédient avec alimentId uniquement")
+    void testCreateRecette_WithAlimentIdOnly() {
+        RecetteCreateRequest request = new RecetteCreateRequest();
+        request.setTitre("Nouvelle Recette");
+        request.setDescription("Description");
+
+        IngredientRequest ingredient = IngredientRequest.builder()
+                .alimentId(1L)
+                .quantite(200.0f)
+                .unite("GRAMME")
+                .principal(true)
+                .build();
+        request.setIngredients(Arrays.asList(ingredient));
+
+        EtapeRequest etape = EtapeRequest.builder()
+                .ordre(1)
+                .temps(10)
+                .texte("Couper les tomates")
+                .build();
+        request.setEtapes(Arrays.asList(etape));
+
+        when(recetteClient.createRecette(any(RecetteCreateRequest.class)))
+                .thenReturn(recetteResponse);
+
+        RecetteResponse result = recetteService.createRecette(request);
+
+        assertNotNull(result);
+        verify(recetteClient, times(1)).createRecette(any(RecetteCreateRequest.class));
+    }
+
+    @Test
+    @DisplayName("createRecette - devrait rejeter un ingrédient sans alimentId ni alimentNom")
+    void testCreateRecette_WithoutAlimentIdAndNom() {
+        RecetteCreateRequest request = new RecetteCreateRequest();
+        request.setTitre("Nouvelle Recette");
+        request.setDescription("Description");
+
+        IngredientRequest ingredient = IngredientRequest.builder()
+                .quantite(200.0f)
+                .unite("GRAMME")
+                .principal(true)
+                .build();
+        request.setIngredients(Arrays.asList(ingredient));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            recetteService.createRecette(request);
+        });
+
+        String errorMessage = exception.getMessage();
+        assertTrue(errorMessage.contains("L'ID ou le nom de l'aliment est requis"),
+                "Le message d'erreur devrait contenir 'L'ID ou le nom de l'aliment est requis' mais était: " + errorMessage);
+        verify(recetteClient, never()).createRecette(any(RecetteCreateRequest.class));
+    }
+
+    @Test
+    @DisplayName("updateRecette - devrait accepter un ingrédient avec alimentNom uniquement")
+    void testUpdateRecette_WithAlimentNomOnly() {
+        RecetteUpdateRequest request = new RecetteUpdateRequest();
+        request.setTitre("Titre modifié");
+
+        IngredientRequest ingredient = IngredientRequest.builder()
+                .alimentNom("Tomate")
+                .quantite(200.0f)
+                .unite("GRAMME")
+                .principal(true)
+                .build();
+        request.setIngredients(Arrays.asList(ingredient));
+
+        EtapeRequest etape = EtapeRequest.builder()
+                .ordre(1)
+                .temps(10)
+                .texte("Couper les tomates")
+                .build();
+        request.setEtapes(Arrays.asList(etape));
+
+        when(recetteClient.recetteExists(1L)).thenReturn(true);
+        when(recetteClient.updateRecette(anyLong(), any(RecetteUpdateRequest.class)))
+                .thenReturn(recetteResponse);
+
+        RecetteResponse result = recetteService.updateRecette(1L, request);
+
+        assertNotNull(result);
+        verify(recetteClient, times(1)).updateRecette(eq(1L), any(RecetteUpdateRequest.class));
+    }
+
+    @Test
+    @DisplayName("updateRecette - devrait rejeter un ingrédient sans alimentId ni alimentNom")
+    void testUpdateRecette_WithoutAlimentIdAndNom() {
+        RecetteUpdateRequest request = new RecetteUpdateRequest();
+        request.setTitre("Titre modifié");
+
+        IngredientRequest ingredient = IngredientRequest.builder()
+                .quantite(200.0f)
+                .unite("GRAMME")
+                .principal(true)
+                .build();
+        request.setIngredients(Arrays.asList(ingredient));
+
+        // La validation se fait avant l'appel à recetteExists, donc pas besoin de mocker
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            recetteService.updateRecette(1L, request);
+        });
+
+        assertTrue(exception.getMessage().contains("L'ID ou le nom de l'aliment est requis"));
+        // La validation échoue avant l'appel à recetteExists, donc aucune interaction
+        verify(recetteClient, never()).recetteExists(anyLong());
+        verify(recetteClient, never()).updateRecette(anyLong(), any(RecetteUpdateRequest.class));
     }
 }
 

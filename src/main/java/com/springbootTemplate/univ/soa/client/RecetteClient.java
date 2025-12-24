@@ -272,4 +272,89 @@ public class RecetteClient {
             throw new RuntimeException("Erreur lors de la récupération des statistiques", e);
         }
     }
+
+    /**
+     * Récupérer les recettes en attente de validation
+     */
+    public List<RecetteResponse> getRecettesEnAttente() {
+        String url = recetteServiceUrl + "/api/persistance/recettes/statut/EN_ATTENTE";
+        log.info("GET {} - Récupération des recettes en attente", url);
+
+        try {
+            ResponseEntity<List<RecetteResponse>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<RecetteResponse>>() {}
+            );
+
+            log.info("{} recettes en attente récupérées", response.getBody().size());
+            return response.getBody();
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des recettes en attente: {}", e.getMessage());
+            throw new RuntimeException("Erreur lors de la récupération des recettes en attente", e);
+        }
+    }
+
+    /**
+     * Valider une recette
+     */
+    public RecetteResponse validerRecette(Long id) {
+        String url = recetteServiceUrl + "/api/persistance/recettes/" + id + "/valider";
+        log.info("PUT {} - Validation de la recette", url);
+
+        try {
+            ResponseEntity<RecetteResponse> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.PUT,
+                    null,
+                    RecetteResponse.class
+            );
+
+            log.info("Recette validée - ID: {}", id);
+            return response.getBody();
+
+        } catch (HttpClientErrorException.NotFound e) {
+            log.error("Recette non trouvée - ID: {}", id);
+            throw new RuntimeException("Recette non trouvée avec l'ID: " + id);
+        } catch (Exception e) {
+            log.error("Erreur lors de la validation de la recette: {}", e.getMessage());
+            throw new RuntimeException("Erreur lors de la validation de la recette", e);
+        }
+    }
+
+    /**
+     * Rejeter une recette avec un motif
+     */
+    public RecetteResponse rejeterRecette(Long id, String motif) {
+        String url = recetteServiceUrl + "/api/persistance/recettes/" + id + "/rejeter";
+        log.info("PUT {} - Rejet de la recette avec motif: {}", url, motif);
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Créer un objet JSON avec le motif
+            String body = "{\"motif\":\"" + motif + "\"}";
+            HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
+
+            ResponseEntity<RecetteResponse> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.PUT,
+                    httpRequest,
+                    RecetteResponse.class
+            );
+
+            log.info("Recette rejetée - ID: {}", id);
+            return response.getBody();
+
+        } catch (HttpClientErrorException.NotFound e) {
+            log.error("Recette non trouvée - ID: {}", id);
+            throw new RuntimeException("Recette non trouvée avec l'ID: " + id);
+        } catch (Exception e) {
+            log.error("Erreur lors du rejet de la recette: {}", e.getMessage());
+            throw new RuntimeException("Erreur lors du rejet de la recette", e);
+        }
+    }
 }

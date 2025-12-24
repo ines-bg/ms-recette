@@ -22,4 +22,7 @@ public interface RecetteService {
     boolean recetteExists(Long id);
     List<RecetteResponse> getPopularRecettes(int limit);
     List<RecetteResponse> getRecentRecettes(int limit);
+    List<RecetteResponse> getRecettesEnAttente();
+    RecetteResponse validerRecette(Long id);
+    RecetteResponse rejeterRecette(Long id, String motif);
 }
