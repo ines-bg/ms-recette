@@ -175,5 +175,55 @@ class FichierRecetteServiceImplTest {
         assertDoesNotThrow(() -> fichierRecetteService.deleteAllFichiersByRecette(1L));
         verify(fichierRecetteClient, times(1)).deleteAllFichiersByRecette(1L);
     }
+
+    @Test
+    @DisplayName("streamImage - devrait streamer une image avec succès")
+    void testStreamImage_Success() {
+        Resource resource = mock(Resource.class);
+        ResponseEntity<Resource> responseEntity = new ResponseEntity<>(resource, HttpStatus.OK);
+        when(fichierRecetteClient.streamImage(anyLong(), anyLong())).thenReturn(responseEntity);
+
+        ResponseEntity<Resource> result = fichierRecetteService.streamImage(1L, 1L);
+
+        assertNotNull(result);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertNotNull(result.getBody());
+        verify(fichierRecetteClient, times(1)).streamImage(1L, 1L);
+    }
+
+    @Test
+    @DisplayName("streamImage - devrait lancer une exception en cas d'erreur")
+    void testStreamImage_ThrowsException() {
+        when(fichierRecetteClient.streamImage(anyLong(), anyLong()))
+                .thenThrow(new RuntimeException("Erreur streaming"));
+
+        assertThrows(RuntimeException.class, () -> fichierRecetteService.streamImage(1L, 1L));
+        verify(fichierRecetteClient, times(1)).streamImage(1L, 1L);
+    }
+
+    @Test
+    @DisplayName("streamAny - devrait streamer un fichier avec succès")
+    void testStreamAny_Success() {
+        Resource resource = mock(Resource.class);
+        ResponseEntity<Resource> responseEntity = new ResponseEntity<>(resource, HttpStatus.OK);
+        when(fichierRecetteClient.streamAny(anyLong(), anyLong())).thenReturn(responseEntity);
+
+        ResponseEntity<Resource> result = fichierRecetteService.streamAny(1L, 1L);
+
+        assertNotNull(result);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertNotNull(result.getBody());
+        verify(fichierRecetteClient, times(1)).streamAny(1L, 1L);
+    }
+
+    @Test
+    @DisplayName("streamAny - devrait lancer une exception en cas d'erreur")
+    void testStreamAny_ThrowsException() {
+        when(fichierRecetteClient.streamAny(anyLong(), anyLong()))
+                .thenThrow(new RuntimeException("Erreur streaming"));
+
+        assertThrows(RuntimeException.class, () -> fichierRecetteService.streamAny(1L, 1L));
+        verify(fichierRecetteClient, times(1)).streamAny(1L, 1L);
+    }
 }
 

@@ -116,5 +116,27 @@ public class FichierRecetteServiceImpl implements FichierRecetteService {
             throw new RuntimeException("Impossible de supprimer les fichiers: " + e.getMessage(), e);
         }
     }
+
+    @Override
+    public ResponseEntity<Resource> streamImage(Long recetteId, Long fichierId) {
+        log.info("Stream image {} de la recette {}", fichierId, recetteId);
+        try {
+            return fichierRecetteClient.streamImage(recetteId, fichierId);
+        } catch (Exception e) {
+            log.error("Erreur lors du stream de l'image: {}", e.getMessage());
+            throw new RuntimeException("Impossible de streamer l'image: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public ResponseEntity<Resource> streamAny(Long recetteId, Long fichierId) {
+        log.info("Stream fichier {} de la recette {}", fichierId, recetteId);
+        try {
+            return fichierRecetteClient.streamAny(recetteId, fichierId);
+        } catch (Exception e) {
+            log.error("Erreur lors du stream du fichier: {}", e.getMessage());
+            throw new RuntimeException("Impossible de streamer le fichier: " + e.getMessage(), e);
+        }
+    }
 }
 

@@ -179,5 +179,61 @@ class FichierRecetteControllerTest {
         mockMvc.perform(delete("/api/recettes/1/fichiers"))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    @DisplayName("streamImage - devrait streamer une image avec succès")
+    void testStreamImage_Success() throws Exception {
+        Resource resource = new ByteArrayResource("image content".getBytes());
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"test.jpg\"");
+        headers.setContentType(MediaType.IMAGE_JPEG);
+        ResponseEntity<Resource> responseEntity = new ResponseEntity<>(resource, headers, HttpStatus.OK);
+
+        when(fichierRecetteService.streamImage(anyLong(), anyLong())).thenReturn(responseEntity);
+
+        mockMvc.perform(get("/api/recettes/1/fichiers/images/1/content"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"test.jpg\""))
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_JPEG_VALUE));
+    }
+
+    @Test
+    @DisplayName("streamImage - devrait retourner 500 en cas d'erreur")
+    void testStreamImage_Error() throws Exception {
+        when(fichierRecetteService.streamImage(anyLong(), anyLong()))
+                .thenThrow(new RuntimeException("Erreur lors du streaming"));
+
+        mockMvc.perform(get("/api/recettes/1/fichiers/images/1/content"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    @DisplayName("streamAny - devrait streamer un fichier avec succès")
+    void testStreamAny_Success() throws Exception {
+        Resource resource = new ByteArrayResource("file content".getBytes());
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"test.pdf\"");
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        ResponseEntity<Resource> responseEntity = new ResponseEntity<>(resource, headers, HttpStatus.OK);
+
+        when(fichierRecetteService.streamAny(anyLong(), anyLong())).thenReturn(responseEntity);
+
+        mockMvc.perform(get("/api/recettes/1/fichiers/1/content"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"test.pdf\""))
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE));
+    }
+
+    @Test
+    @DisplayName("streamAny - devrait retourner 500 en cas d'erreur")
+    void testStreamAny_Error() throws Exception {
+        when(fichierRecetteService.streamAny(anyLong(), anyLong()))
+                .thenThrow(new RuntimeException("Erreur lors du streaming"));
+
+        mockMvc.perform(get("/api/recettes/1/fichiers/1/content"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.error").exists());
+    }
 }
 

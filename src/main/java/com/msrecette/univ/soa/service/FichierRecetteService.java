@@ -17,5 +17,9 @@ public interface FichierRecetteService {
     FichierRecetteResponse getFichierMetadata(Long recetteId, Long fichierId);
     void deleteFichier(Long recetteId, Long fichierId);
     void deleteAllFichiersByRecette(Long recetteId);
+    ResponseEntity<Resource> streamImage(Long recetteId, Long fichierId);
+    ResponseEntity<Resource> streamAny(Long recetteId, Long fichierId);
 }
+
+
 

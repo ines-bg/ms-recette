@@ -166,18 +166,11 @@
 				</executions>
 				<configuration>
 					<excludes>
-						<!-- Exclure les classes de configuration -->
 						<exclude>**/config/**</exclude>
 						<exclude>**/Application.class</exclude>
-
-						<!-- Exclure les DTOs/Request/Response (pas de logique métier) -->
 						<exclude>**/request/**</exclude>
 						<exclude>**/response/**</exclude>
-
-						<!-- Exclure les exceptions custom (simples) -->
 						<exclude>**/exception/**</exclude>
-
-						<!-- Exclure les entités (POJOs) -->
 						<exclude>**/model/**</exclude>
 					</excludes>
 				</configuration>

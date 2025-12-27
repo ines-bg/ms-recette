@@ -167,6 +167,30 @@ public class FichierRecetteClient {
         restTemplate.delete(url);
     }
 
+    public ResponseEntity<Resource> streamImage(Long recetteId, Long fichierId) {
+        String url = persistanceServiceUrl + "/api/persistance/recettes/" + recetteId + "/fichiers/images/" + fichierId + "/content";
+        log.info("GET {} - Stream image", url);
+
+        return restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                null,
+                Resource.class
+        );
+    }
+
+    public ResponseEntity<Resource> streamAny(Long recetteId, Long fichierId) {
+        String url = persistanceServiceUrl + "/api/persistance/recettes/" + recetteId + "/fichiers/" + fichierId + "/content";
+        log.info("GET {} - Stream fichier", url);
+
+        return restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                null,
+                Resource.class
+        );
+    }
+
     private static class MultipartInputStreamFileResource extends InputStreamResource {
         private final String filename;
 

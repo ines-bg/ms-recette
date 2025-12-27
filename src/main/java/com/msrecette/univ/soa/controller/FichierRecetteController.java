@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -213,6 +214,44 @@ public class FichierRecetteController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Erreur lors de la suppression: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/images/{fichierId}/content")
+    @Operation(summary = "Servir une image en streaming (inline)")
+    @ApiResponse(responseCode = "200", description = "Image servie en streaming")
+    public ResponseEntity<?> streamImage(
+            @Parameter(description = "ID de la recette", example = "1")
+            @PathVariable Long recetteId,
+            @Parameter(description = "ID du fichier image", example = "1")
+            @PathVariable Long fichierId) {
+
+        log.info("GET /api/recettes/{}/fichiers/images/{}/content - Stream image", recetteId, fichierId);
+
+        try {
+            return fichierRecetteService.streamImage(recetteId, fichierId);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Erreur lors de la récupération de l'image: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{fichierId}/content")
+    @Operation(summary = "Servir un fichier en streaming (inline)")
+    @ApiResponse(responseCode = "200", description = "Fichier servi en streaming")
+    public ResponseEntity<?> streamAny(
+            @Parameter(description = "ID de la recette", example = "1")
+            @PathVariable Long recetteId,
+            @Parameter(description = "ID du fichier", example = "1")
+            @PathVariable Long fichierId) {
+
+        log.info("GET /api/recettes/{}/fichiers/{}/content - Stream fichier", recetteId, fichierId);
+
+        try {
+            return fichierRecetteService.streamAny(recetteId, fichierId);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Erreur lors de la récupération du fichier: " + e.getMessage()));
         }
     }
 

@@ -50,6 +50,9 @@ class FichierRecetteClientTest {
         fichierResponse.setType("IMAGE");
         fichierResponse.setUrlTelechargement("http://minio/bucket/image.jpg");
         fichierResponse.setDateUpload(LocalDateTime.now());
+        fichierResponse.setContentType("image/jpeg");
+        fichierResponse.setTaille(1024L);
+        fichierResponse.setNomStocke("123456.jpg");
     }
 
     @Test
