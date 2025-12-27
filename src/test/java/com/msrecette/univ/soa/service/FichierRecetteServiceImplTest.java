@@ -42,8 +42,8 @@ class FichierRecetteServiceImplTest {
         fichierResponse.setRecetteId(1L);
         fichierResponse.setNomOriginal("test.jpg");
         fichierResponse.setType("IMAGE");
-        fichierResponse.setUrl("http://minio/bucket/test.jpg");
-        fichierResponse.setDateCreation(LocalDateTime.now());
+        fichierResponse.setUrlTelechargement("http://minio/bucket/test.jpg");
+        fichierResponse.setDateUpload(LocalDateTime.now());
 
         file = mock(MultipartFile.class);
     }

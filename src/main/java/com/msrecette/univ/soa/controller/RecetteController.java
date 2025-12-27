@@ -55,6 +55,18 @@ public class RecetteController {
         return ResponseEntity.ok(recettes);
     }
 
+    @GetMapping("/utilisateur/{utilisateurId}")
+    @Operation(summary = "Récupérer les recettes d'un utilisateur",
+            description = "Récupère toutes les recettes créées par un utilisateur spécifique")
+    @ApiResponse(responseCode = "200", description = "Recettes de l'utilisateur récupérées")
+    public ResponseEntity<List<RecetteResponse>> getRecettesByUtilisateur(
+            @Parameter(description = "ID de l'utilisateur", example = "1")
+            @PathVariable Long utilisateurId) {
+        log.info("GET /api/recettes/utilisateur/{} - Récupération des recettes de l'utilisateur", utilisateurId);
+        List<RecetteResponse> recettes = recetteService.getRecettesByUtilisateur(utilisateurId);
+        return ResponseEntity.ok(recettes);
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Récupérer une recette par ID", description = "Récupère les détails d'une recette spécifique")
     @ApiResponses(value = {

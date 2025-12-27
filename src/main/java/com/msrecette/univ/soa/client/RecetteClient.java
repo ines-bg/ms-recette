@@ -82,6 +82,30 @@ public class RecetteClient {
     }
 
     /**
+     * Récupérer les recettes d'un utilisateur
+     */
+    public List<RecetteResponse> getRecettesByUtilisateur(Long utilisateurId) {
+        String url = recetteServiceUrl + "/api/persistance/recettes/utilisateur/" + utilisateurId;
+        log.info("GET {} - Récupération des recettes de l'utilisateur {}", url, utilisateurId);
+
+        try {
+            ResponseEntity<List<RecetteResponse>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<RecetteResponse>>() {}
+            );
+
+            log.info("{} recettes récupérées pour l'utilisateur {}", response.getBody().size(), utilisateurId);
+            return response.getBody();
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des recettes de l'utilisateur: {}", e.getMessage());
+            throw new RuntimeException("Erreur lors de la récupération des recettes de l'utilisateur", e);
+        }
+    }
+
+    /**
      * Récupérer une recette par son ID avec cache
      */
     @Cacheable(value = "recette", key = "#id", unless = "#result == null")

@@ -27,13 +27,23 @@ public class RecetteServiceImpl implements RecetteService {
     @CacheEvict(value = {"recettes", "recettesByCategorie"}, allEntries = true)
     public RecetteResponse createRecette(RecetteCreateRequest request) {
         log.info("Création d'une nouvelle recette: {}", request.getTitre());
+        log.info("🔍 utilisateurId reçu dans ms-recette: {}", request.getUtilisateurId());
 
         // Valider d'abord avant toute communication avec le client
         validateRecetteCreateRequest(request);
 
         try {
+            log.info("📤 Envoi vers ms-persistence avec utilisateurId: {}", request.getUtilisateurId());
             RecetteResponse response = recetteClient.createRecette(request);
             log.info("Recette créée avec succès - ID: {}", response.getId());
+            log.info("📥 utilisateurId reçu de ms-persistence: {}", response.getUtilisateurId());
+
+            // Si ms-persistence ne retourne pas utilisateurId, on le garde de la requête
+            if (response.getUtilisateurId() == null && request.getUtilisateurId() != null) {
+                log.warn("⚠️ PROBLÈME: ms-persistence ne retourne pas utilisateurId, on le force depuis la requête");
+                response.setUtilisateurId(request.getUtilisateurId());
+            }
+
             return response;
         } catch (Exception e) {
             log.error("Erreur lors de la création de la recette: {}", e.getMessage());
@@ -53,6 +63,20 @@ public class RecetteServiceImpl implements RecetteService {
         } catch (Exception e) {
             log.error("Erreur lors de la récupération des recettes: {}", e.getMessage());
             throw new RuntimeException("Impossible de récupérer les recettes: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<RecetteResponse> getRecettesByUtilisateur(Long utilisateurId) {
+        log.info("Récupération des recettes de l'utilisateur: {}", utilisateurId);
+
+        try {
+            List<RecetteResponse> recettes = recetteClient.getRecettesByUtilisateur(utilisateurId);
+            log.info("{} recettes récupérées pour l'utilisateur {}", recettes.size(), utilisateurId);
+            return recettes;
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des recettes de l'utilisateur: {}", e.getMessage());
+            throw new RuntimeException("Impossible de récupérer les recettes de l'utilisateur: " + e.getMessage(), e);
         }
     }
 
@@ -172,14 +196,22 @@ public class RecetteServiceImpl implements RecetteService {
             key = "#id", allEntries = true)
     public RecetteResponse updateRecette(Long id, RecetteUpdateRequest request) {
         log.info("Mise à jour de la recette: {}", id);
+        log.info("🔍 utilisateurId reçu dans ms-recette pour mise à jour: {}", request.getUtilisateurId());
 
         // Valider d'abord avant toute communication avec le client
         validateRecetteUpdateRequest(request);
 
         try {
-
+            log.info("📤 Envoi mise à jour vers ms-persistence avec utilisateurId: {}", request.getUtilisateurId());
             RecetteResponse response = recetteClient.updateRecette(id, request);
             log.info("Recette mise à jour avec succès - ID: {}", id);
+            log.info("📥 utilisateurId reçu de ms-persistence après màj: {}", response.getUtilisateurId());
+
+            if (response.getUtilisateurId() == null && request.getUtilisateurId() != null) {
+                log.warn("⚠️ PROBLÈME: ms-persistence ne retourne pas utilisateurId après màj, on le force depuis la requête");
+                response.setUtilisateurId(request.getUtilisateurId());
+            }
+
             return response;
         } catch (RecetteNotFoundException e) {
             throw e;

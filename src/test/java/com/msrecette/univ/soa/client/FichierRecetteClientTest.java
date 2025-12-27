@@ -48,8 +48,8 @@ class FichierRecetteClientTest {
         fichierResponse.setRecetteId(1L);
         fichierResponse.setNomOriginal("image.jpg");
         fichierResponse.setType("IMAGE");
-        fichierResponse.setUrl("http://minio/bucket/image.jpg");
-        fichierResponse.setDateCreation(LocalDateTime.now());
+        fichierResponse.setUrlTelechargement("http://minio/bucket/image.jpg");
+        fichierResponse.setDateUpload(LocalDateTime.now());
     }
 
     @Test

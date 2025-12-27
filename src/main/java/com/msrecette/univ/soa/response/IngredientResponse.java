@@ -24,7 +24,6 @@ public class IngredientResponse {
     @Schema(description = "Nom de l'aliment", example = "Spaghetti")
     private String alimentNom;
 
-
     @Schema(description = "Quantité", example = "200.0")
     private Float quantite;
 

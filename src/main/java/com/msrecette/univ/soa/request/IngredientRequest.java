@@ -24,7 +24,6 @@ public class IngredientRequest {
     @Schema(description = "Nom de l'aliment - peut être le nom d'un aliment existant ou un nom libre", example = "Spaghetti")
     private String alimentNom;
 
-
     @Schema(description = "Quantité", example = "200.0")
     @DecimalMin(value = "0.01", message = "La quantité doit être supérieure à 0")
     private Float quantite;

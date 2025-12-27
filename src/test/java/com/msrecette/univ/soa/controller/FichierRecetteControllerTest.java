@@ -7,7 +7,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -15,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -44,8 +44,8 @@ class FichierRecetteControllerTest {
         fichierResponse.setRecetteId(1L);
         fichierResponse.setNomOriginal("test.jpg");
         fichierResponse.setType("IMAGE");
-        fichierResponse.setUrl("http://minio/bucket/test.jpg");
-        fichierResponse.setDateCreation(LocalDateTime.now());
+        fichierResponse.setUrlTelechargement("http://minio/bucket/test.jpg");
+        fichierResponse.setDateUpload(LocalDateTime.now());
     }
 
     @Test
