@@ -57,12 +57,13 @@ public class RecetteClient {
     }
 
     /**
-     * Récupérer toutes les recettes avec cache
+     * Récupérer toutes les recettes avec pagination et cache
+     * OPTIMISÉ: DTOLight (sans collections) et pagination
      */
-    @Cacheable(value = "recettes", unless = "#result == null || #result.isEmpty()")
-    public List<RecetteResponse> getAllRecettes() {
-        String url = recetteServiceUrl + "/api/persistance/recettes";
-        log.info("GET {} - Récupération de toutes les recettes", url);
+    @Cacheable(value = "recettes", key = "'all_page_' + #page + '_size_' + #size", unless = "#result == null || #result.isEmpty()")
+    public List<RecetteResponse> getAllRecettes(int page, int size) {
+        String url = recetteServiceUrl + "/api/persistance/recettes?page=" + page + "&size=" + size;
+        log.info("GET {} - Récupération de toutes les recettes (page={}, size={})", url, page, size);
 
         try {
             ResponseEntity<List<RecetteResponse>> response = restTemplate.exchange(
@@ -72,13 +73,20 @@ public class RecetteClient {
                     new ParameterizedTypeReference<List<RecetteResponse>>() {}
             );
 
-            log.info("{} recettes récupérées", response.getBody().size());
+            log.info("{} recettes récupérées (page={}, size={})", response.getBody().size(), page, size);
             return response.getBody();
 
         } catch (Exception e) {
             log.error("Erreur lors de la récupération des recettes: {}", e.getMessage());
             throw new RuntimeException("Erreur lors de la récupération des recettes", e);
         }
+    }
+
+    /**
+     * Récupérer toutes les recettes avec pagination (sans cache explicite)
+     */
+    public List<RecetteResponse> getAllRecettes() {
+        return getAllRecettes(0, 50); // Page 0, 50 items par défaut
     }
 
     /**
