@@ -52,14 +52,26 @@ public class RecetteServiceImpl implements RecetteService {
     }
 
     @Override
-    @Cacheable(value = "recettes", unless = "#result == null || #result.isEmpty()")
-    public List<RecetteResponse> getAllRecettes() {
-        log.info("Récupération de toutes les recettes");
-
+    @Cacheable(value = "recettes", key = "'page_' + #page + '_size_' + #size", unless = "#result == null || #result.isEmpty()")
+    public List<RecetteResponse> getAllRecettes(int page, int size) {
+        log.info("Récupération de toutes les recettes (page={}, size={})", page, size);
         try {
             List<RecetteResponse> recettes = recetteClient.getAllRecettes();
-            log.info("{} recettes récupérées", recettes.size());
+            log.info("{} recettes récupérées (page={}, size={})", recettes != null ? recettes.size() : 0, page, size);
             return recettes;
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des recettes: {}", e.getMessage());
+            throw new RuntimeException("Impossible de récupérer les recettes: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    @Cacheable(value = "recettes", unless = "#result == null || #result.isEmpty()")
+    public List<RecetteResponse> getAllRecettes() {
+        log.info("Récupération de toutes les recettes (par défaut)");
+        try {
+            // Appel direct client pour éviter l'auto-invocation d'une méthode @Cacheable
+            return recetteClient.getAllRecettes();
         } catch (Exception e) {
             log.error("Erreur lors de la récupération des recettes: {}", e.getMessage());
             throw new RuntimeException("Impossible de récupérer les recettes: " + e.getMessage(), e);

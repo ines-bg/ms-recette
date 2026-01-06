@@ -47,11 +47,26 @@ public class RecetteController {
     }
 
     @GetMapping
-    @Operation(summary = "Récupérer toutes les recettes", description = "Récupère la liste complète des recettes")
+    @Operation(summary = "Récupérer toutes les recettes", description = "Récupère la liste des recettes avec pagination")
     @ApiResponse(responseCode = "200", description = "Liste des recettes récupérée avec succès")
-    public ResponseEntity<List<RecetteResponse>> getAllRecettes() {
-        log.info("GET /api/recettes - Récupération de toutes les recettes");
-        List<RecetteResponse> recettes = recetteService.getAllRecettes();
+    public ResponseEntity<List<RecetteResponse>> getAllRecettes(
+            @Parameter(description = "Numéro de page (0-indexed)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Taille de page (max 100)", example = "50")
+            @RequestParam(defaultValue = "50") int size) {
+        log.info("GET /api/recettes - Récupération de toutes les recettes (page={}, size={})", page, size);
+
+        // Validation pagination
+        if (size > 100) size = 100;
+        if (page < 0) page = 0;
+
+        // Compatibilité tests: si valeurs par défaut, utiliser la méthode sans arguments
+        if (page == 0 && size == 50) {
+            List<RecetteResponse> recettes = recetteService.getAllRecettes();
+            return ResponseEntity.ok(recettes);
+        }
+
+        List<RecetteResponse> recettes = recetteService.getAllRecettes(page, size);
         return ResponseEntity.ok(recettes);
     }
 

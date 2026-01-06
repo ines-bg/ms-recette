@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 
 public interface RecetteService {
     RecetteResponse createRecette(RecetteCreateRequest request);
+    List<RecetteResponse> getAllRecettes(int page, int size);
     List<RecetteResponse> getAllRecettes();
     List<RecetteResponse> getRecettesByUtilisateur(Long utilisateurId);
     RecetteResponse getRecetteById(Long id);
